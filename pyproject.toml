@@ -20,6 +20,7 @@ plotly = "^5.10.0"
 demoji = "^1.1.0"
 mojimoji = "^0.0.12"
 neologdn = "^0.5.1"
+sklearn = "^0.0"
 
 [tool.poetry.dev-dependencies]
 
