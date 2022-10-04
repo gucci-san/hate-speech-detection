@@ -23,6 +23,7 @@ sklearn = "^0.0"
 torch = {url = "https://download.pytorch.org/whl/cu116/torch-1.12.0%2Bcu116-cp39-cp39-linux_x86_64.whl"}
 fugashi = "^1.2.0"
 colorama = "^0.4.5"
+pyarrow = "^9.0.0"
 
 [tool.poetry.dev-dependencies]
 
