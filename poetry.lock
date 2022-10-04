@@ -1313,6 +1313,7 @@ typing-extensions = "*"
 [package.source]
 type = "url"
 url = "https://download.pytorch.org/whl/cu116/torch-1.12.0%2Bcu116-cp39-cp39-linux_x86_64.whl"
+
 [[package]]
 name = "tornado"
 version = "6.2"
@@ -1470,7 +1471,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "92f5dd2bd1b39b44777d4b1dd1c46f585f4c5ae2cfee1562e67130b6039ff957"
+content-hash = "dced0b2853c43f586616836435e2a60069c54572de65b9dca86aea9fa2005c32"
 
 [metadata.files]
 appnope = [
