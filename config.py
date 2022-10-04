@@ -1,5 +1,7 @@
 from tkinter import W
 
+SEED = 42
+
 data_path = "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/"
 input_root = "./input/"
 output_root = "./output/"
