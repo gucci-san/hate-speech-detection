@@ -65,13 +65,17 @@ def clean_text(text: str) -> str:
 
 
 class HateSpeechDataset(Dataset):
-    def __init__(self, df, tokenizer, max_length, num_classes, text_col="text"):
+    def __init__(self, df, tokenizer, max_length, num_classes, text_col="text", isTrain=True):
         self.df = df
         self.max_len = max_length
         self.tokenizer = tokenizer
         self.text = df[text_col].values
-        self.target = df[label_name].values
         self.num_classes = num_classes
+        if isTrain:
+            self.target = df[label_name].values
+        else:
+            self.target = np.zeros(df.shape[0])
+        self.isTrain = isTrain
 
     def __len__(self):
         return len(self.df)
@@ -86,16 +90,22 @@ class HateSpeechDataset(Dataset):
             max_length=self.max_len,
             padding="max_length"
         )
-        target = int(self.target[index])
-
-        onehot_t = np.zeros(self.num_classes, dtype=np.float32)
-        onehot_t[target] = 1.0
-
-        return {
-            "input_ids": torch.tensor(inputs_text["input_ids"], dtype=torch.long),
-            "attention_mask": torch.tensor(inputs_text["attention_mask"], dtype=torch.long),
-            "target": torch.tensor(onehot_t, dtype=torch.float)
-        }
+        
+        if self.isTrain:
+            target = int(self.target[index])
+            onehot_t = np.zeros(self.num_classes, dtype=np.float32)
+            onehot_t[target] = 1.0
+            return {
+                "input_ids": torch.tensor(inputs_text["input_ids"], dtype=torch.long),
+                "attention_mask": torch.tensor(inputs_text["attention_mask"], dtype=torch.long),
+                "target": torch.tensor(onehot_t, dtype=torch.float)
+            }
+        
+        else:
+            return {
+                "input_ids": torch.tensor(inputs_text["input_ids"], dtype=torch.long),
+                "attention_mask": torch.tensor(inputs_text["attention_mask"], dtype=torch.long),
+            }
 
 
 class HateSpeechModel(nn.Module):
