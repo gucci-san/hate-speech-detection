@@ -1,4 +1,4 @@
-from tkinter import W
+import torch
 
 SEED = 42
 
@@ -8,6 +8,8 @@ output_root = "./output/"
 
 id_name = "id"
 label_name = "label"
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # mecab --
 dic_neologd = "/var/lib/mecab/dic/mecab-ipadic-neologd"
