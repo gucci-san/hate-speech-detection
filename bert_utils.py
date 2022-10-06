@@ -22,6 +22,13 @@ b_ = Fore.BLUE; y_ = Fore.YELLOW; g_ = Fore.GREEN; sr_ = Fore.RESET
 from config import *
 
 
+def Write_exp_management(exp_manage_path, log_df):
+    if not os.path.exists(f"{exp_manage_path}experiment_log.csv"):
+        log_df.to_csv(f"{exp_manage_path}experiment_log.csv", index=False)
+    else:
+        log_df.to_csv(f"{exp_manage_path}experiment_log.csv", index=False, mode="a", header=None)
+
+
 def Write_log(logFile, text, isPrint=True):
     if logFile is None:
         print(text)
