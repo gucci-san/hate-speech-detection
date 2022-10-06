@@ -22,6 +22,18 @@ b_ = Fore.BLUE; y_ = Fore.YELLOW; g_ = Fore.GREEN; sr_ = Fore.RESET
 from config import *
 
 
+def Write_log(logFile, text, isPrint=True):
+    if logFile is None:
+        print(text)
+        return None
+    else:
+        if isPrint:
+            print(text)
+        logFile.write(text)
+        logFile.write("\n")
+        return None
+
+
 def seed_everything(seed=42):
     print(f"\n****** SEED fixed : {seed} ******\n\n")
     random.seed(seed)
@@ -32,14 +44,6 @@ def seed_everything(seed=42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
 seed_everything(SEED)
-
-
-def Write_log(logFile, text, isPrint=True):
-    if isPrint:
-        print(text)
-    logFile.write(text)
-    logFile.write("\n")
-    return None
 
 
 def clean_text(text: str) -> str:
@@ -236,10 +240,10 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
     return epoch_loss
 
 
-def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, num_epochs, fold, output_path):
+def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, num_epochs, fold, output_path, log=None):
 
     if torch.cuda.is_available():
-        print(f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
+        Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
 
     start_time = time.time()
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -266,25 +270,30 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
         history["Valid Loss"].append(valid_epoch_loss)
 
         if valid_epoch_loss <= best_epoch_loss:
-            print(f"{b_}Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
+            #print(f"{b_}Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
+            Write_log(log, f"Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
+            
             best_epoch_loss = valid_epoch_loss
             best_model_wts = copy.deepcopy(model.state_dict())
 
-            #torch.save(model.state_dict(), f"{output_path}model-state-dict-fold{fold}.bin")
             torch.save({
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "loss": valid_epoch_loss,
             }, f"{output_path}model-fold{fold}.pth")  # 途中再開したい場合はmodel.state_dict()以外も必要 --
-            print(f"Model Saved{sr_}"); print()
+            #print(f"Model Saved{sr_}"); print()
+            Write_log(log, f"Model Saved"); print()
+
 
     end_time = time.time()
     time_elapsed = end_time - start_time
-    print("Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
+    #print("Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
+    Write_log(log, "Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
         time_elapsed//3600, (time_elapsed%3600)//60, (time_elapsed%3600)%60
     ))
-    print("Best Loss: {:.4f}".format(best_epoch_loss))
+    #print("Best Loss: {:.4f}".format(best_epoch_loss))
+    Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
     model.load_state_dict(best_model_wts)
 
