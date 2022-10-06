@@ -34,6 +34,14 @@ def seed_everything(seed=42):
 seed_everything(SEED)
 
 
+def Write_log(logFile, text, isPrint=True):
+    if isPrint:
+        print(text)
+    logFile.write(text)
+    logFile.write("\n")
+    return None
+
+
 def clean_text(text: str) -> str:
     """
     日本語から記号とかを削除
