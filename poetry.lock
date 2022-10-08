@@ -1208,6 +1208,14 @@ objc = ["pyobjc-framework-cocoa"]
 win32 = ["pywin32"]
 
 [[package]]
+name = "sentencepiece"
+version = "0.1.97"
+description = "SentencePiece python wrapper"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "setuptools-scm"
 version = "7.0.5"
 description = "the blessed package to manage your versions by scm tags"
@@ -1509,7 +1517,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "0b4338f57a0762ccfcaf3110c452f4b55088052f3614c40cce7fef43fff023d3"
+content-hash = "db74f12822807904fa0d4084ffc0026dca35f986508029da882192bf10044e68"
 
 [metadata.files]
 appnope = [
@@ -1906,6 +1914,7 @@ send2trash = [
     {file = "Send2Trash-1.8.0-py3-none-any.whl", hash = "sha256:f20eaadfdb517eaca5ce077640cb261c7d2698385a6a0f072a4a5447fd49fa08"},
     {file = "Send2Trash-1.8.0.tar.gz", hash = "sha256:d2c24762fd3759860a0aff155e45871447ea58d2be6bdd39b5c8f966a0c99c2d"},
 ]
+sentencepiece = []
 setuptools-scm = []
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, T5Tokenizer
 from torch.utils.data import DataLoader
 from glob import glob
 
@@ -22,10 +22,17 @@ model_paths
 
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
 
-tokenizer = AutoTokenizer.from_pretrained(
-    settings.model_name,
-    mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
-)
+# define tokenizer --
+if settings.model_name in ["rinna/japanese-roberta-base"]:
+    tokenizer = T5Tokenizer.from_pretrained(
+        settings.model_name
+    )
+    tokenizer.do_lower_case = True
+else:
+    tokenizer = AutoTokenizer.from_pretrained(
+        settings.model_name,
+        mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
+    )
 
 # make test preds --
 test_dataset = HateSpeechDataset(
