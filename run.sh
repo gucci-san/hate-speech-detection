@@ -1,0 +1,1 @@
+python bert_run_train.py --run_id "bert_baseline_lr5e-6" --learning_rate 5e-6 --epochs 10
