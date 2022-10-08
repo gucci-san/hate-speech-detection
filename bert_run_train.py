@@ -5,7 +5,7 @@ import os
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 
-from transformers import AutoTokenizer, T5Tokenizer, AdamW
+from transformers import AutoTokenizer, T5Tokenizer, BertTokenizer, AdamW
 
 from colorama import Fore; r_=Fore.RED; sr_=Fore.RESET
 from glob import glob
@@ -123,6 +123,10 @@ if settings.model_name in ["rinna/japanese-roberta-base"]:
         settings.model_name
     )
     tokenizer.do_lower_case = True
+elif settings.model_name in ["ganchengguang/Roformer-base-japanese"]:
+    tokenizer = BertTokenizer.from_pretrained(
+        settings.model_name
+    )
 else:
     tokenizer = AutoTokenizer.from_pretrained(
         settings.model_name,
