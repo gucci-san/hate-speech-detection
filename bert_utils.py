@@ -12,7 +12,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 
 from transformers import (
-    AutoModel 
+    AutoModel , RobertaForMaskedLM
 )
 
 from tqdm import tqdm
@@ -130,18 +130,27 @@ class HateSpeechDataset(Dataset):
 class HateSpeechModel(nn.Module):
     def __init__(self, model_name, num_classes):
         super(HateSpeechModel, self).__init__()
-        self.model = AutoModel.from_pretrained(
-            model_name,
-            output_attentions=True,
-            output_hidden_states=True,
-            )
+        if model_name in ["rinna/japanese-roberta-base"]:
+            self.model = RobertaForMaskedLM.from_pretrained(
+                model_name,
+                output_attentions=True,
+                output_hidden_states=True,
+                )
+        else:
+            self.model = AutoModel.from_pretrained(
+                model_name,
+                output_attentions=True,
+                output_hidden_states=True,
+                )
+        self.model_name = model_name
         self.dropout = nn.Dropout(p=0.2)
         self.fc = nn.Linear(768, num_classes)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_ids, attention_mask):
-        out = self.model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
-        out = self.dropout(out[1])
+        out = self.model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
+        out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
+        out = self.dropout(out)
         outputs = self.fc(out)
         outputs = self.sigmoid(outputs)
 

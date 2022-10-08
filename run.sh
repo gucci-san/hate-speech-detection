@@ -1,7 +1,7 @@
 # single run --
-python bert_run_train.py --run_id "bert_baseline_lr1e-5" --learning_rate 1e-5 --epochs 10
+#python bert_run_train.py --run_id "bert_baseline" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
+#python bert_run_train.py --run_id "roberta_baseline" --model_name "rinna/japanese-roberta-base" --epochs 10 --trial True
 
 ## # prediction --
-## python bert_run_test.py --run_id "bert_baseline_lr1e-4"
-## python bert_run_test.py --run_id "bert_baseline_lr1e-5"
-## python bert_run_test.py --run_id "bert_baseline_lr5e-6"
+#python bert_run_test.py --run_id "bert_baseline"
+python bert_run_test.py --run_id "roberta_baseline"

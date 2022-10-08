@@ -5,7 +5,7 @@ import os
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 
-from transformers import AutoTokenizer, AdamW
+from transformers import AutoTokenizer, T5Tokenizer, AdamW
 
 from colorama import Fore; r_=Fore.RED; sr_=Fore.RESET
 from glob import glob
@@ -43,6 +43,10 @@ parser.add_argument("--T_max", type=int, default=500)
 parser.add_argument("--weight_decay", type=float, default=1e-5)
 parser.add_argument("--n_accumulate", type=int, default=1)
 
+parser.add_argument("--remark", type=str, default=None)
+
+parser.add_argument("--trial", type=bool, default=False)
+
 args, unknown = parser.parse_known_args()
 
 settings = pd.Series(dtype=object)
@@ -69,12 +73,18 @@ settings["min_lr"] = args.min_lr
 settings["T_max"] = args.T_max
 settings["weight_decay"] = args.weight_decay
 settings["n_accumulate"] = args.n_accumulate
+# experiment remarks --
+settings["remark"] = args.remark
+
 
 # run_idが重複したらlogが消えてしまうので、プログラムごと止めるようにする --
 if not os.path.exists(settings.output_path):
     os.mkdir(settings.output_path)
 else:
-    assert False, (f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}")
+    if args.trial:
+        assert True
+    else:
+        assert False, (f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}")
 
 os.system(f"cp ./*py {settings.output_path}")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
@@ -106,11 +116,19 @@ for fold, (_, val_index) in enumerate(skf.split(X=train_df, y=train_df[label_nam
     train_df.loc[val_index, "kfold"] = int(fold)
 train_df["kfold"] = train_df["kfold"].astype(int)
 
+
 # define tokenizer --
-tokenizer = AutoTokenizer.from_pretrained(
-    settings.model_name,
-    mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
-)
+if settings.model_name in ["rinna/japanese-roberta-base"]:
+    tokenizer = T5Tokenizer.from_pretrained(
+        settings.model_name
+    )
+    tokenizer.do_lower_case = True
+else:
+    tokenizer = AutoTokenizer.from_pretrained(
+        settings.model_name,
+        mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
+    )
+
 
 # define log file --
 log = open(settings.output_path + "/train.log", "w", buffering=1)

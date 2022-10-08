@@ -25,6 +25,7 @@ fugashi = "^1.2.0"
 colorama = "^0.4.5"
 pyarrow = "^9.0.0"
 pandarallel = "^1.6.3"
+sentencepiece = "^0.1.97"
 
 [tool.poetry.dev-dependencies]
 
