@@ -74,7 +74,7 @@ if not os.path.exists(settings.output_path):
     os.mkdir(settings.output_path)
 
 os.system(f"cp ./*py {settings.output_path}")
-settings.to_json(f"{settings.output_path}settings.json")
+settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 
 # ====================================== #
