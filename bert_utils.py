@@ -12,7 +12,8 @@ from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 
 from transformers import (
-    AutoModel, RobertaForMaskedLM, RoFormerModel
+    AutoModel, RobertaForMaskedLM, RoFormerModel,
+    AutoTokenizer, T5Tokenizer, BertTokenizer,
 )
 
 from tqdm import tqdm
@@ -81,6 +82,26 @@ def clean_text(text: str) -> str:
     text = re.sub("[\uFF01-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65\u3000-\u303F]", '', text)
 
     return text
+
+
+def define_tokenizer(model_name: str):
+    if model_name in ["rinna/japanese-roberta-base"]:
+        tokenizer = T5Tokenizer.from_pretrained(
+            model_name
+        )
+        tokenizer.do_lower_case = True
+    
+    elif model_name in ["ganchengguang/Roformer-base-japanese"]:
+        tokenizer = BertTokenizer.from_pretrained(
+            model_name
+        )
+    
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
+        )
+    return tokenizer
 
 
 class HateSpeechDataset(Dataset):
