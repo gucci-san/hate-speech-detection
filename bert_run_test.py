@@ -23,16 +23,7 @@ model_paths
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
 
 # define tokenizer --
-if settings.model_name in ["rinna/japanese-roberta-base"]:
-    tokenizer = T5Tokenizer.from_pretrained(
-        settings.model_name
-    )
-    tokenizer.do_lower_case = True
-else:
-    tokenizer = AutoTokenizer.from_pretrained(
-        settings.model_name,
-        mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
-    )
+tokenizer = define_tokenizer(settings.model_name)
 
 # make test preds --
 test_dataset = HateSpeechDataset(

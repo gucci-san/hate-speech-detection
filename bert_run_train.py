@@ -118,20 +118,7 @@ train_df["kfold"] = train_df["kfold"].astype(int)
 
 
 # define tokenizer --
-if settings.model_name in ["rinna/japanese-roberta-base"]:
-    tokenizer = T5Tokenizer.from_pretrained(
-        settings.model_name
-    )
-    tokenizer.do_lower_case = True
-elif settings.model_name in ["ganchengguang/Roformer-base-japanese"]:
-    tokenizer = BertTokenizer.from_pretrained(
-        settings.model_name
-    )
-else:
-    tokenizer = AutoTokenizer.from_pretrained(
-        settings.model_name,
-        mecab_kwargs={"mecab_dic":None, "mecab_option": f"-d {dic_neologd}"}
-    )
+tokenizer = define_tokenizer(settings.model_name)
 
 
 # define log file --
