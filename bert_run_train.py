@@ -7,6 +7,7 @@ from sklearn.metrics import f1_score, accuracy_score
 
 from transformers import AutoTokenizer, AdamW
 
+from colorama import Fore; r_=Fore.RED; sr_=Fore.RESET
 from glob import glob
 from config import *
 from bert_utils import *
@@ -20,7 +21,7 @@ import argparse
 #                                        #
 # ====================================== #
 parser = argparse.ArgumentParser()
-parser.add_argument("--run_id", type=str, default="tmp")
+parser.add_argument("--run_id", type=str, default=None)
 parser.add_argument("--num_classes", type=int, default=2)
 
 parser.add_argument("--epochs", type=int, default=1)
@@ -43,7 +44,6 @@ parser.add_argument("--weight_decay", type=float, default=1e-5)
 parser.add_argument("--n_accumulate", type=int, default=1)
 
 args, unknown = parser.parse_known_args()
-
 
 settings = pd.Series(dtype=object)
 # project settings --
@@ -70,11 +70,14 @@ settings["T_max"] = args.T_max
 settings["weight_decay"] = args.weight_decay
 settings["n_accumulate"] = args.n_accumulate
 
+# run_idが重複したらlogが消えてしまうので、プログラムごと止めるようにする --
 if not os.path.exists(settings.output_path):
     os.mkdir(settings.output_path)
+else:
+    assert False, (f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}")
 
 os.system(f"cp ./*py {settings.output_path}")
-settings.to_json(f"{settings.output_path}settings.json")
+settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 
 # ====================================== #
