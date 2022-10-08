@@ -9,16 +9,16 @@ from config import *
 
 import argparse
 
+# 計算時のsettingはtrainで保存したjsonから読み込む --
+# run_idだけ指定 --
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, default="tmp")
-
 args, unknown = parser.parse_known_args()
 
+# settings, fine-tuningしたモデル, モデル作成時に前処理したtest_dfを読み込み -- 
 output_path = f"./output/{args.run_id}/"
 settings = pd.read_json(f"{output_path}settings.json", typ="series")
-
 model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
-
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
 
 # define tokenizer --
@@ -51,4 +51,3 @@ submission = pd.read_csv(f"{data_path}sample_submission.csv")
 submission = pd.merge(submission, test_df.loc[:, ["id", f"{model_id}_pred"]], how="left", on="id")
 submission = submission.drop(["label"], axis=1).rename(columns={f"{model_id}_pred": "label"})
 submission.to_csv(f"{settings.output_path}sub_{settings.run_id}.csv", index=False)
-
