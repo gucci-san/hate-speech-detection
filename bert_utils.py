@@ -12,7 +12,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 
 from transformers import (
-    AutoModel , RobertaForMaskedLM
+    AutoModel, RobertaForMaskedLM, RoFormerModel
 )
 
 from tqdm import tqdm
@@ -132,6 +132,12 @@ class HateSpeechModel(nn.Module):
         super(HateSpeechModel, self).__init__()
         if model_name in ["rinna/japanese-roberta-base"]:
             self.model = RobertaForMaskedLM.from_pretrained(
+                model_name,
+                output_attentions=True,
+                output_hidden_states=True,
+                )
+        elif model_name in ["ganchengguang/Roformer-base-japanese"]:
+            self.model = RoFormerModel.from_pretrained(
                 model_name,
                 output_attentions=True,
                 output_hidden_states=True,
