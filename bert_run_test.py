@@ -18,7 +18,6 @@ output_path = f"./output/{args.run_id}/"
 settings = pd.read_json(f"{output_path}settings.json", typ="series")
 
 model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
-model_paths
 
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
 

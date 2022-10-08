@@ -7,11 +7,11 @@
 #python bert_run_train.py --run_id "roformer_baseline" --model_name "ganchengguang/Roformer-base-japanese" --epochs 10
 
 ## # trial --
-## python bert_run_train.py --run_id "tmp" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --trial True
+python bert_run_train.py --run_id "tmp" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --trial True
 
 
 ## # prediction --
 #python bert_run_test.py --run_id "bert_baseline"
 #python bert_run_test.py --run_id "roberta_baseline"
-python bert_run_test.py --run_id "electra_baseline"
-python bert_run_test.py --run_id "roformer_baseline"
+#python bert_run_test.py --run_id "electra_baseline"
+#python bert_run_test.py --run_id "roformer_baseline"

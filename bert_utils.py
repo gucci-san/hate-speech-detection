@@ -157,21 +157,25 @@ class HateSpeechModel(nn.Module):
                 output_attentions=True,
                 output_hidden_states=True,
                 )
+            self.hidden_size = 768
         elif model_name in ["ganchengguang/Roformer-base-japanese"]:
             self.model = RoFormerModel.from_pretrained(
                 model_name,
                 output_attentions=True,
                 output_hidden_states=True,
                 )
+            self.hidden_size = 768
         else:
             self.model = AutoModel.from_pretrained(
                 model_name,
                 output_attentions=True,
                 output_hidden_states=True,
                 )
+            self.hidden_size = 768
+
         self.model_name = model_name
         self.dropout = nn.Dropout(p=0.2)
-        self.fc = nn.Linear(768, num_classes)
+        self.fc = nn.Linear(self.hidden_size, num_classes)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, input_ids, attention_mask):
@@ -313,7 +317,6 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
         history["Valid Loss"].append(valid_epoch_loss)
 
         if valid_epoch_loss <= best_epoch_loss:
-            #print(f"{b_}Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
             Write_log(log, f"Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
             
             best_epoch_loss = valid_epoch_loss
@@ -325,17 +328,14 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
                 "optimizer_state_dict": optimizer.state_dict(),
                 "loss": valid_epoch_loss,
             }, f"{output_path}model-fold{fold}.pth")  # 途中再開したい場合はmodel.state_dict()以外も必要 --
-            #print(f"Model Saved{sr_}"); print()
             Write_log(log, f"Model Saved"); print()
 
 
     end_time = time.time()
     time_elapsed = end_time - start_time
-    #print("Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
     Write_log(log, "Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
         time_elapsed//3600, (time_elapsed%3600)//60, (time_elapsed%3600)%60
     ))
-    #print("Best Loss: {:.4f}".format(best_epoch_loss))
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
     model.load_state_dict(best_model_wts)

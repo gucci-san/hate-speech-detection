@@ -32,8 +32,6 @@ parser.add_argument("--test_batch_size", type=int, default=64)
 
 parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking")
 parser.add_argument("--max_length", type=int, default=76)
-parser.add_argument("--hidden_size", type=int, default=768)
-parser.add_argument("--num_hidden_layers", type=int, default=24)
 parser.add_argument("--dropout", type=float, default=0.2)
 
 parser.add_argument("--learning_rate", type=float, default=1e-5)
@@ -63,8 +61,6 @@ settings["test_batch_size"] = args.test_batch_size
 # bert settings --
 settings["model_name"] = args.model_name
 settings["max_length"] = args.max_length
-settings["hidden_size"] = args.hidden_size
-settings["num_hidden_layers"] = args.num_hidden_layers
 settings["dropout"] = args.dropout
 # optimizer settings --
 settings["learning_rate"] = args.learning_rate
