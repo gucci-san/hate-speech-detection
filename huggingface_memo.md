@@ -11,6 +11,9 @@
     * out["pooler_output"] != out["hidden_states"][-1].max(axis=1)[0]
         * pooler_outputが何してるのか問題
 
+    * len(out["hidden_states"]) = 13, type(out["hidden_states"]) -> tuple,
+        * hidden_layer_numをタプルで持って、各hidden_layerが[batch, max_length, hidden_size]を持つイメージ
+
 #### RobertaForMaskedLM
 * out = model(ids, masks, **kwargs)
     * type(out) -> MaskedLMOutput

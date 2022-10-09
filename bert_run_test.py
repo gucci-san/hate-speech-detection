@@ -9,17 +9,16 @@ from config import *
 
 import argparse
 
+# 計算時のsettingはtrainで保存したjsonから読み込む --
+# run_idだけ指定 --
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, default="tmp")
-
 args, unknown = parser.parse_known_args()
 
+# settings, fine-tuningしたモデル, モデル作成時に前処理したtest_dfを読み込み -- 
 output_path = f"./output/{args.run_id}/"
 settings = pd.read_json(f"{output_path}settings.json", typ="series")
-
 model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
-model_paths
-
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
 
 # define tokenizer --
@@ -36,7 +35,7 @@ test_loader = DataLoader(test_dataset, batch_size=settings.test_batch_size, num_
 preds_list = []
 for fold in range(0, settings.folds):
     model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
-    preds = inference(settings.model_name, settings.num_classes, model_paths[fold], test_loader, device)
+    preds = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], test_loader, device)
         
     for _class in range(0, settings.num_classes):
         test_df.loc[:, f"{model_id}_oof_class_{_class}"] = preds[:, _class]
@@ -52,4 +51,3 @@ submission = pd.read_csv(f"{data_path}sample_submission.csv")
 submission = pd.merge(submission, test_df.loc[:, ["id", f"{model_id}_pred"]], how="left", on="id")
 submission = submission.drop(["label"], axis=1).rename(columns={f"{model_id}_pred": "label"})
 submission.to_csv(f"{settings.output_path}sub_{settings.run_id}.csv", index=False)
-

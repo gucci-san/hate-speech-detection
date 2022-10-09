@@ -15,6 +15,8 @@ from bert_utils import *
 import argparse
 
 
+
+
 # ====================================== #
 #                                        #
 #    -- Define Settings and Constants -- #
@@ -23,31 +25,25 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, default=None)
 parser.add_argument("--num_classes", type=int, default=2)
-
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--folds", type=int, default=5)
 parser.add_argument("--train_batch_size", type=int, default=32)
 parser.add_argument("--valid_batch_size", type=int, default=64)
 parser.add_argument("--test_batch_size", type=int, default=64)
-
 parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking")
+parser.add_argument("--model_custom_header", type=str, default="max_pooling")
 parser.add_argument("--max_length", type=int, default=76)
-parser.add_argument("--hidden_size", type=int, default=768)
-parser.add_argument("--num_hidden_layers", type=int, default=24)
 parser.add_argument("--dropout", type=float, default=0.2)
-
 parser.add_argument("--learning_rate", type=float, default=1e-5)
 parser.add_argument("--scheduler_name", type=str, default="CosineAnnealingLR")
 parser.add_argument("--min_lr", type=float, default=1e-6)
 parser.add_argument("--T_max", type=int, default=500)
 parser.add_argument("--weight_decay", type=float, default=1e-5)
 parser.add_argument("--n_accumulate", type=int, default=1)
-
 parser.add_argument("--remark", type=str, default=None)
-
 parser.add_argument("--trial", type=bool, default=False)
-
 args, unknown = parser.parse_known_args()
+
 
 settings = pd.Series(dtype=object)
 # project settings --
@@ -62,9 +58,8 @@ settings["valid_batch_size"] = args.valid_batch_size
 settings["test_batch_size"] = args.test_batch_size
 # bert settings --
 settings["model_name"] = args.model_name
+settings["model_custom_header"] = args.model_custom_header
 settings["max_length"] = args.max_length
-settings["hidden_size"] = args.hidden_size
-settings["num_hidden_layers"] = args.num_hidden_layers
 settings["dropout"] = args.dropout
 # optimizer settings --
 settings["learning_rate"] = args.learning_rate
@@ -86,8 +81,12 @@ else:
     else:
         assert False, (f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}")
 
+
+# 計算時点でのpyファイル, settingsを保存 --
 os.system(f"cp ./*py {settings.output_path}")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
+
+
 
 
 # ====================================== #
@@ -95,7 +94,6 @@ settings.to_json(f"{settings.output_path}settings.json", indent=4)
 #    --     Prepare for training   --    #
 #                                        #
 # ====================================== #
-
 # load data --
 train = pd.read_csv(data_path+"train.csv")
 test = pd.read_csv(data_path+"test.csv")
@@ -111,19 +109,18 @@ test_df = df.loc[train_shape:, :]
 # make folds --
 skf = StratifiedKFold(n_splits=settings.folds, shuffle=True, random_state=SEED)
 split = skf.split(train_df, train_df[label_name])
-
 for fold, (_, val_index) in enumerate(skf.split(X=train_df, y=train_df[label_name])):
     train_df.loc[val_index, "kfold"] = int(fold)
 train_df["kfold"] = train_df["kfold"].astype(int)
 
-
 # define tokenizer --
 tokenizer = define_tokenizer(settings.model_name)
-
 
 # define log file --
 log = open(settings.output_path + "/train.log", "w", buffering=1)
 Write_log(log, "***************** TRAINING ********************")
+
+
 
 
 # ====================================== #
@@ -149,7 +146,7 @@ for fold in range(0, settings.folds):
     )
 
     # Model construct --
-    model = HateSpeechModel(model_name=settings.model_name, num_classes=settings.num_classes)
+    model = HateSpeechModel(model_name=settings.model_name, num_classes=settings.num_classes, custom_header=settings.model_custom_header)
     model.to(device)
 
     # Define Optimizer and Scheduler --
@@ -162,6 +159,7 @@ for fold in range(0, settings.folds):
 
     del model, history, train_loader, valid_loader
     _ = gc.collect()
+
 
 
 
@@ -193,7 +191,7 @@ for fold in range(0, settings.folds):
     )
 
     valid = train_df[train_df.kfold == fold]
-    out = inference(settings.model_name, settings.num_classes, model_paths[fold], valid_loader, device)
+    out = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], valid_loader, device)
 
     for _class in range(0, settings.num_classes):
         valid[f"{model_id}_oof_class{_class}"] = out[:, _class]
@@ -222,4 +220,3 @@ log_df = pd.DataFrame(settings).T
 log_df["all_valid_metric"] = all_valid_metric
 log_df["mean_valid_metric"] = mean_valid_metric
 Write_exp_management(output_root, log_df)
-

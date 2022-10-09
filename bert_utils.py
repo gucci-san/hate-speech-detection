@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
+from torch.nn import functional as F
 
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
@@ -21,6 +22,11 @@ from collections import defaultdict
 from colorama import Fore
 b_ = Fore.BLUE; y_ = Fore.YELLOW; g_ = Fore.GREEN; sr_ = Fore.RESET
 from config import *
+
+
+def Debug_print(x):
+    print(f"{y_}{x}{sr_}")
+    return None
 
 
 def Write_exp_management(exp_manage_path, log_df):
@@ -149,7 +155,7 @@ class HateSpeechDataset(Dataset):
 
 
 class HateSpeechModel(nn.Module):
-    def __init__(self, model_name, num_classes):
+    def __init__(self, model_name, num_classes, custom_header=None):
         super(HateSpeechModel, self).__init__()
         if model_name in ["rinna/japanese-roberta-base"]:
             self.model = RobertaForMaskedLM.from_pretrained(
@@ -157,31 +163,69 @@ class HateSpeechModel(nn.Module):
                 output_attentions=True,
                 output_hidden_states=True,
                 )
+            self.hidden_size = 768
         elif model_name in ["ganchengguang/Roformer-base-japanese"]:
             self.model = RoFormerModel.from_pretrained(
                 model_name,
                 output_attentions=True,
                 output_hidden_states=True,
                 )
+            self.hidden_size = 768
         else:
             self.model = AutoModel.from_pretrained(
                 model_name,
                 output_attentions=True,
                 output_hidden_states=True,
                 )
+            self.hidden_size = 768
+
         self.model_name = model_name
         self.dropout = nn.Dropout(p=0.2)
-        self.fc = nn.Linear(768, num_classes)
-        self.sigmoid = nn.Sigmoid()
+        self.fc = nn.Linear(self.hidden_size, num_classes)
+        self.softmax = nn.Softmax()
+
+        if custom_header == "conv":
+            self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
+            self.cnn2 = nn.Conv1d(256, num_classes, kernel_size=2, padding=1)
+        elif custom_header == "lstm":
+            self.lstm = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
+        elif custom_header == "concatenate-4":
+            self.fc_4 = nn.Linear(self.hidden_size*4, num_classes)
+
+        self.custom_header = custom_header
+        print(f"{y_}{self.custom_header}{sr_}")
 
     def forward(self, input_ids, attention_mask):
         out = self.model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
-        out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
-        out = self.dropout(out)
-        outputs = self.fc(out)
-        outputs = self.sigmoid(outputs)
+        
+        # 最終的に[batch_size, hidden_size]になるようにcustom_headerを作っていく --
+        # https://www.ai-shift.co.jp/techblog/2145 --
+        if self.custom_header == "max_pooling":
+            out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
+            out = self.dropout(out)
+            outputs = self.fc(out)
+            outputs = self.softmax(outputs)
 
-        return outputs.squeeze()
+        elif self.custom_header == "conv":
+            last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
+            cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
+            cnn_embeddings = self.cnn2(cnn_embeddings)
+            outputs = cnn_embeddings.max(axis=2)[0]
+            outputs = self.softmax(outputs)
+
+        elif self.custom_header == "lstm":
+            last_hidden_state = out["hidden_states"][-1]
+            out = self.lstm(last_hidden_state, None)[0]
+            out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
+            outputs = self.fc(out)
+            outputs = self.softmax(outputs)
+
+        elif self.custom_header == "concatenate-4":
+            out = torch.cat([out["hidden_states"][-1*i][:, 0, :] for i in range(1, 4+1)], dim=1)
+            outputs = self.fc_4(out)
+            outputs = self.softmax(outputs)
+
+        return outputs
 
 
 def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_length, num_classes, text_col="text"):
@@ -313,7 +357,6 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
         history["Valid Loss"].append(valid_epoch_loss)
 
         if valid_epoch_loss <= best_epoch_loss:
-            #print(f"{b_}Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
             Write_log(log, f"Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}")
             
             best_epoch_loss = valid_epoch_loss
@@ -325,17 +368,14 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
                 "optimizer_state_dict": optimizer.state_dict(),
                 "loss": valid_epoch_loss,
             }, f"{output_path}model-fold{fold}.pth")  # 途中再開したい場合はmodel.state_dict()以外も必要 --
-            #print(f"Model Saved{sr_}"); print()
             Write_log(log, f"Model Saved"); print()
 
 
     end_time = time.time()
     time_elapsed = end_time - start_time
-    #print("Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
     Write_log(log, "Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
         time_elapsed//3600, (time_elapsed%3600)//60, (time_elapsed%3600)%60
     ))
-    #print("Best Loss: {:.4f}".format(best_epoch_loss))
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
     model.load_state_dict(best_model_wts)
@@ -364,11 +404,11 @@ def valid_fn(model, dataloader, device):
     return preds
 
 
-def inference(model_name, num_classes, model_paths, dataloader, device):
+def inference(model_name, num_classes, custom_header, model_paths, dataloader, device):
     final_preds = []
 
     for i, path in enumerate([model_paths]):
-        model = HateSpeechModel(model_name=model_name, num_classes=num_classes)
+        model = HateSpeechModel(model_name=model_name, num_classes=num_classes, custom_header=custom_header)
         model.to(device)
         checkpoint = torch.load(model_paths)
         model.load_state_dict(checkpoint["model_state_dict"])
