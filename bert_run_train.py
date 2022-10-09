@@ -216,7 +216,10 @@ Write_log(log, f">>  all_valid_metric : f1 = {f1_score(train_df.label, train_df.
 # experiment manage --
 mean_valid_metric = np.mean(fold_f1)
 all_valid_metric = f1_score(train_df.label, train_df.model_pred)
-log_df = pd.DataFrame(settings).T
-log_df["all_valid_metric"] = all_valid_metric
-log_df["mean_valid_metric"] = mean_valid_metric
+log_df = pd.DataFrame()
+log_df["Single_Public_LB"] = [None]  # VSCodeでLBみて手書きする想定 --
+log_df["all_valid_metric"] = [np.round(all_valid_metric, 6)]
+log_df["mean_valid_metric"] = [np.round(mean_valid_metric, 6)]
+log_df = pd.concat([log_df, pd.DataFrame(settings).T], axis=1)
+
 Write_exp_management(output_root, log_df)
