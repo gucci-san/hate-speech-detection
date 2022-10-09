@@ -24,6 +24,11 @@ b_ = Fore.BLUE; y_ = Fore.YELLOW; g_ = Fore.GREEN; sr_ = Fore.RESET
 from config import *
 
 
+def Debug_print(x):
+    print(f"{y_}{x}{sr_}")
+    return None
+
+
 def Write_exp_management(exp_manage_path, log_df):
     if not os.path.exists(f"{exp_manage_path}experiment_log.csv"):
         log_df.to_csv(f"{exp_manage_path}experiment_log.csv", index=False)
@@ -182,6 +187,8 @@ class HateSpeechModel(nn.Module):
         if custom_header == "conv":
             self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
             self.cnn2 = nn.Conv1d(256, num_classes, kernel_size=2, padding=1)
+        elif custom_header == "lstm":
+            self.lstm = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
 
         self.custom_header = custom_header
         print(f"{y_}{self.custom_header}{sr_}")
@@ -202,6 +209,13 @@ class HateSpeechModel(nn.Module):
             cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
             cnn_embeddings = self.cnn2(cnn_embeddings)
             outputs = cnn_embeddings.max(axis=2)[0]
+            outputs = self.softmax(outputs)
+
+        elif self.custom_header == "lstm":
+            last_hidden_state = out["hidden_states"][-1]
+            out = self.lstm(last_hidden_state, None)[0]
+            out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
+            outputs = self.fc(out)
             outputs = self.softmax(outputs)
 
         return outputs
