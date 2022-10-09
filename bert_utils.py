@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
+from torch.nn import functional as F
 
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
@@ -149,7 +150,7 @@ class HateSpeechDataset(Dataset):
 
 
 class HateSpeechModel(nn.Module):
-    def __init__(self, model_name, num_classes):
+    def __init__(self, model_name, num_classes, custom_header=None):
         super(HateSpeechModel, self).__init__()
         if model_name in ["rinna/japanese-roberta-base"]:
             self.model = RobertaForMaskedLM.from_pretrained(
@@ -176,16 +177,34 @@ class HateSpeechModel(nn.Module):
         self.model_name = model_name
         self.dropout = nn.Dropout(p=0.2)
         self.fc = nn.Linear(self.hidden_size, num_classes)
-        self.sigmoid = nn.Sigmoid()
+        self.softmax = nn.Softmax()
+
+        if custom_header == "conv":
+            self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
+            self.cnn2 = nn.Conv1d(256, num_classes, kernel_size=2, padding=1)
+
+        self.custom_header = custom_header
+        print(f"{y_}{self.custom_header}{sr_}")
 
     def forward(self, input_ids, attention_mask):
         out = self.model(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
-        out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
-        out = self.dropout(out)
-        outputs = self.fc(out)
-        outputs = self.sigmoid(outputs)
+        
+        # 最終的に[batch_size, hidden_size]になるようにcustom_headerを作っていく --
+        # https://www.ai-shift.co.jp/techblog/2145 --
+        if self.custom_header == "max_pooling":
+            out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
+            out = self.dropout(out)
+            outputs = self.fc(out)
+            outputs = self.softmax(outputs)
 
-        return outputs.squeeze()
+        elif self.custom_header == "conv":
+            last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
+            cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
+            cnn_embeddings = self.cnn2(cnn_embeddings)
+            outputs = cnn_embeddings.max(axis=2)[0]
+            outputs = self.softmax(outputs)
+
+        return outputs
 
 
 def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_length, num_classes, text_col="text"):
@@ -364,11 +383,11 @@ def valid_fn(model, dataloader, device):
     return preds
 
 
-def inference(model_name, num_classes, model_paths, dataloader, device):
+def inference(model_name, num_classes, custom_header, model_paths, dataloader, device):
     final_preds = []
 
     for i, path in enumerate([model_paths]):
-        model = HateSpeechModel(model_name=model_name, num_classes=num_classes)
+        model = HateSpeechModel(model_name=model_name, num_classes=num_classes, custom_header=custom_header)
         model.to(device)
         checkpoint = torch.load(model_paths)
         model.load_state_dict(checkpoint["model_state_dict"])

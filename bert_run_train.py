@@ -31,6 +31,7 @@ parser.add_argument("--train_batch_size", type=int, default=32)
 parser.add_argument("--valid_batch_size", type=int, default=64)
 parser.add_argument("--test_batch_size", type=int, default=64)
 parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking")
+parser.add_argument("--model_custom_header", type=str, default="max_pooling")
 parser.add_argument("--max_length", type=int, default=76)
 parser.add_argument("--dropout", type=float, default=0.2)
 parser.add_argument("--learning_rate", type=float, default=1e-5)
@@ -57,6 +58,7 @@ settings["valid_batch_size"] = args.valid_batch_size
 settings["test_batch_size"] = args.test_batch_size
 # bert settings --
 settings["model_name"] = args.model_name
+settings["model_custom_header"] = args.model_custom_header
 settings["max_length"] = args.max_length
 settings["dropout"] = args.dropout
 # optimizer settings --
@@ -144,7 +146,7 @@ for fold in range(0, settings.folds):
     )
 
     # Model construct --
-    model = HateSpeechModel(model_name=settings.model_name, num_classes=settings.num_classes)
+    model = HateSpeechModel(model_name=settings.model_name, num_classes=settings.num_classes, custom_header=settings.model_custom_header)
     model.to(device)
 
     # Define Optimizer and Scheduler --
