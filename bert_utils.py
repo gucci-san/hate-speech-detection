@@ -425,7 +425,6 @@ def inference(model_name, num_classes, custom_header, model_paths, dataloader, d
         preds = valid_fn(model, dataloader, device)
         final_preds.append(preds)
 
-
     final_preds = np.array(final_preds)
     final_preds = np.mean(final_preds, axis=0)
     return final_preds
