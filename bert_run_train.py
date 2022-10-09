@@ -191,7 +191,7 @@ for fold in range(0, settings.folds):
     )
 
     valid = train_df[train_df.kfold == fold]
-    out = inference(settings.model_name, settings.num_classes, model_paths[fold], valid_loader, device)
+    out = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], valid_loader, device)
 
     for _class in range(0, settings.num_classes):
         valid[f"{model_id}_oof_class{_class}"] = out[:, _class]
