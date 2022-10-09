@@ -6,6 +6,9 @@ import re
 import demoji
 import neologdn
 
+from pyknp import Juman, BList, KNP
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # avoid juman warnings --
+
 import torch
 import torch.nn as nn
 from torch.optim import lr_scheduler
@@ -91,18 +94,29 @@ def clean_text(text: str) -> str:
     return text
 
 
+def juman_parse(text):
+    words = ""
+    jumanpp = Juman()
+    result = jumanpp.analysis(text)
+    for mrp in result.mrph_list():
+        words += (mrp.midasi + " ")
+    return words[:-1]  # last " " omit by [:-1] -- 
+
+
 def define_tokenizer(model_name: str):
     if model_name in ["rinna/japanese-roberta-base"]:
         tokenizer = T5Tokenizer.from_pretrained(
             model_name
         )
         tokenizer.do_lower_case = True
-    
     elif model_name in ["ganchengguang/Roformer-base-japanese"]:
         tokenizer = BertTokenizer.from_pretrained(
             model_name
         )
-    
+    elif model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name
+        )
     else:
         tokenizer = AutoTokenizer.from_pretrained(
             model_name,
@@ -173,6 +187,13 @@ class HateSpeechModel(nn.Module):
                 )
             self.hidden_size = 768
         elif model_name in ["cl-tohoku/bert-large-japanese"]:
+            self.model = AutoModel.from_pretrained(
+                model_name,
+                output_attentions=True,
+                output_hidden_states=True,
+                )
+            self.hidden_size = 1024
+        elif model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
             self.model = AutoModel.from_pretrained(
                 model_name,
                 output_attentions=True,

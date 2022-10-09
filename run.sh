@@ -12,8 +12,8 @@
 #python bert_run_train.py --run_id "bert_lstm" --model_custom_header "lstm" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
 #python bert_run_train.py --run_id "bert_cat4" --model_custom_header "concatenate-4" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
 
-## # trial --
-## python bert_run_train.py --run_id "tmp" --model_name "cl-tohoku/bert-large-japanese" --folds 2 --trial True
+# trial --
+python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 2 --trial True
 
 ## # prediction --
 #python bert_run_test.py --run_id "bert_baseline"
@@ -23,4 +23,4 @@
 #python bert_run_test.py --run_id "bert_conv"
 #python bert_run_test.py --run_id "bert_lstm"
 #python bert_run_test.py --run_id "bert_cat4"
-python bert_run_test.py --run_id "bert_large"
+#python bert_run_test.py --run_id "bert_large"

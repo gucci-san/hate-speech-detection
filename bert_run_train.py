@@ -2,6 +2,9 @@ import pandas as pd
 import torch
 import os
 
+from pandarallel import pandarallel
+pandarallel.initialize(progress_bar=True)
+
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 
@@ -25,6 +28,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, default=None)
 parser.add_argument("--num_classes", type=int, default=2)
+parser.add_argument("--train_data", type=str, default="raw")
 parser.add_argument("--epochs", type=int, default=1)
 parser.add_argument("--folds", type=int, default=5)
 parser.add_argument("--train_batch_size", type=int, default=32)
@@ -51,6 +55,7 @@ settings["run_id"] = args.run_id
 settings["num_classes"] = args.num_classes
 settings["output_path"] = f"{output_root}{settings.run_id}/"
 # training settings --
+settings["train_data"] = args.train_data
 settings["epochs"] = args.epochs
 settings["folds"] = args.folds
 settings["train_batch_size"] = args.train_batch_size
@@ -95,14 +100,22 @@ settings.to_json(f"{settings.output_path}settings.json", indent=4)
 #                                        #
 # ====================================== #
 # load data --
-train = pd.read_csv(data_path+"train.csv")
-test = pd.read_csv(data_path+"test.csv")
-df = pd.concat([train, test]).reset_index(drop=True)
-train_shape = train.shape[0]
-del train, test; _ = gc.collect()
+# ## -> df = pd.concat([train, ..., test]);
+# ## -> train_shape = train.shape[0]
+if settings.train_data == "raw":
+    train = pd.read_csv(data_path+"train.csv")
+    test = pd.read_csv(data_path+"test.csv")
+    df = pd.concat([train, test]).reset_index(drop=True)
+    train_shape = train.shape[0]
+    del train, test; _ = gc.collect()
+
+elif settings.train_data == "raw+sss":
+    print("Not implemented")
 
 # preprocess --
 df["clean_text"] = df["text"].map(lambda x: clean_text(x))
+if settings.model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+    df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
 train_df = df.loc[:train_shape-1, :]
 test_df = df.loc[train_shape:, :]
 
