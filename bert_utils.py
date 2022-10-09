@@ -15,6 +15,7 @@ from torch.nn import functional as F
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
     AutoTokenizer, T5Tokenizer, BertTokenizer,
+    AutoModelForMaskedLM, 
 )
 
 from tqdm import tqdm
@@ -171,6 +172,13 @@ class HateSpeechModel(nn.Module):
                 output_hidden_states=True,
                 )
             self.hidden_size = 768
+        elif model_name in ["cl-tohoku/bert-large-japanese"]:
+            self.model = AutoModel.from_pretrained(
+                model_name,
+                output_attentions=True,
+                output_hidden_states=True,
+                )
+            self.hidden_size = 1024
         else:
             self.model = AutoModel.from_pretrained(
                 model_name,
