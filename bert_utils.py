@@ -189,6 +189,8 @@ class HateSpeechModel(nn.Module):
             self.cnn2 = nn.Conv1d(256, num_classes, kernel_size=2, padding=1)
         elif custom_header == "lstm":
             self.lstm = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
+        elif custom_header == "concatenate-4":
+            self.fc_4 = nn.Linear(self.hidden_size*4, num_classes)
 
         self.custom_header = custom_header
         print(f"{y_}{self.custom_header}{sr_}")
@@ -216,6 +218,11 @@ class HateSpeechModel(nn.Module):
             out = self.lstm(last_hidden_state, None)[0]
             out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
             outputs = self.fc(out)
+            outputs = self.softmax(outputs)
+
+        elif self.custom_header == "concatenate-4":
+            out = torch.cat([out["hidden_states"][-1*i][:, 0, :] for i in range(1, 4+1)], dim=1)
+            outputs = self.fc_4(out)
             outputs = self.softmax(outputs)
 
         return outputs
