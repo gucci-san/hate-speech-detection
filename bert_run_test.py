@@ -36,15 +36,15 @@ preds_list = []
 for fold in range(0, settings.folds):
     model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
     preds = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], test_loader, device)
-        
-    for _class in range(0, settings.num_classes):
-        test_df.loc[:, f"{model_id}_oof_class_{_class}"] = preds[:, _class]
-
     preds_list.append(preds)
 
 final_preds = np.mean(np.array(preds_list), axis=0)
 test_df[f"{model_id}_pred"] = np.argmax(final_preds, axis=1)
+for _class in range(0, settings.num_classes):
+    test_df.loc[:, f"{model_id}_oof_class_{_class}"] = final_preds[:, _class]
 
+# update test_df.feather
+test_df.to_feather(f"{settings.output_path}test_df.feather")
 
 # make submission file --
 submission = pd.read_csv(f"{data_path}sample_submission.csv")
