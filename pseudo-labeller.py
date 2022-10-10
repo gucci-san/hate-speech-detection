@@ -26,7 +26,6 @@ settings["save_path"] = f"{input_root}pseudo_label_{settings.pseudo_label_id}/"
 
 if not os.path.exists(f"{settings.save_path}"):
     os.mkdir(f"{settings.save_path}")
-settings.to_json(f"{settings.save_path}settings.json", indent=4)
 
 train_original_cols = pd.read_csv(f"{data_path}train.csv").columns
 
@@ -42,3 +41,6 @@ df[label_name] = df.loc[:, df.columns.str.contains("oof")].mean(axis=1)
 df = df.sort_values(label_name, ascending=False)
 df = df.loc[(df[label_name] > threshold), train_original_cols].reset_index(drop=True)
 df.to_feather(f"{settings.save_path}test_pseudo_labeled.feather")
+
+settings["df_shape"] = df.shape
+settings.to_json(f"{settings.save_path}settings.json", indent=4)

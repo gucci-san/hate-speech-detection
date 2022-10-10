@@ -75,6 +75,7 @@ settings["weight_decay"] = args.weight_decay
 settings["n_accumulate"] = args.n_accumulate
 # experiment remarks --
 settings["remark"] = args.remark
+settings["seed"] = SEED
 
 
 # run_idが重複したらlogが消えてしまうので、プログラムごと止めるようにする --
@@ -109,8 +110,15 @@ if settings.train_data == "raw":
     train_shape = train.shape[0]
     del train, test; _ = gc.collect()
 
-elif settings.train_data == "raw+sss":
-    print("Not implemented")
+elif settings.train_data == "raw+test_pseudo":
+    train = pd.read_csv(data_path+"train.csv")
+    test_pseudo = pd.read_feather(f"{input_root}pseudo_label_base/test_pseudo_labeled.feather")
+    test_pseudo[label_name] = 1 # hard label --
+    train = pd.concat([train, test_pseudo]).reset_index(drop=True)
+    test = pd.read_csv(data_path+"test.csv")
+    df = pd.concat([train, test]).reset_index(drop=True)
+    train_shape = train.shape[0]
+    del train, test_pseudo, test; _ = gc.collect()
 
 # preprocess --
 df["clean_text"] = df["text"].map(lambda x: clean_text(x))
@@ -131,6 +139,7 @@ tokenizer = define_tokenizer(settings.model_name)
 
 # define log file --
 log = open(settings.output_path + "/train.log", "w", buffering=1)
+Write_log(log, f"train:{train_df.shape}, test:{test_df.shape}\n")
 Write_log(log, "***************** TRAINING ********************")
 
 

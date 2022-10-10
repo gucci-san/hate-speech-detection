@@ -4,6 +4,7 @@
 <スクリプト化>
 * CVとLBが完全一致という感じもしないのでAdversarialしてみてもいいかも
 * pseudo-labelling + corpusから追加データセット作成
+    * pseudoがsoftだとstratified-kfoldのとこ実装変えないと通せない --
 
 ### To Do
 * mdebertaは使ってみたほうがいい
