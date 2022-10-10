@@ -191,15 +191,15 @@ for fold in range(0, settings.folds):
 #                                        #
 # ====================================== #
 model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
-model_paths
 
 fold_f1 = []
 fold_acc = []
 for fold in range(0, settings.folds):
     print(f"{y_} ====== Fold: {fold} ======{sr_}")
 
-    model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
-    
+    #model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
+    model_id = "model"
+
     # Create DataLoader --
     train_loader, valid_loader = prepare_loaders(
         df=train_df,
@@ -244,4 +244,4 @@ log_df["all_valid_metric"] = [np.round(all_valid_metric, 6)]
 log_df["mean_valid_metric"] = [np.round(mean_valid_metric, 6)]
 log_df = pd.concat([log_df, pd.DataFrame(settings).T], axis=1)
 
-Write_exp_management(output_root, log_df)
+Write_exp_management(experiment_root, log_df)

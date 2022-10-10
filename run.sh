@@ -33,13 +33,13 @@
 #python bert_run_train.py --run_id "bert_lstm" --model_custom_header "lstm" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
 #python bert_run_train.py --run_id "bert_cat4" --model_custom_header "concatenate-4" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
 
-# roberta-large_cat4 + pseudo-label
-python bert_run_train.py --run_id "roberta_large_cat4_pseudo" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+test_pseudo"
+### # roberta-large_cat4 + pseudo-label
+### python bert_run_train.py --run_id "roberta_large_cat4_pseudo" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+test_pseudo"
 
 
 
-## # trial --
-## python bert_run_train.py --run_id "tmp" --folds 2 --trial True --train_data "raw+test_pseudo"
+# trial --
+python bert_run_train.py --run_id "tmp" --folds 2 --trial True --train_data "raw+test_pseudo"
 
 ## # prediction --
 #python bert_run_test.py --run_id "bert_baseline"
