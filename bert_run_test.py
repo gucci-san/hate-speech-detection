@@ -16,7 +16,7 @@ parser.add_argument("--run_id", type=str, default="tmp")
 args, unknown = parser.parse_known_args()
 
 # settings, fine-tuningしたモデル, モデル作成時に前処理したtest_dfを読み込み -- 
-output_path = f"./output/{args.run_id}/"
+output_path = f"{output_root}{args.run_id}/"
 settings = pd.read_json(f"{output_path}settings.json", typ="series")
 model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")

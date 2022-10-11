@@ -90,6 +90,7 @@ else:
 
 # 計算時点でのpyファイル, settingsを保存 --
 os.system(f"cp ./*py {settings.output_path}")
+os.system(f"cp ./*sh {settings.output_path}")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 

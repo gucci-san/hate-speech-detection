@@ -392,12 +392,16 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
             best_epoch_loss = valid_epoch_loss
             best_model_wts = copy.deepcopy(model.state_dict())
 
+            # 提出ファイルを圧縮前合計25GBにしないといけないので、いらないもの保存できない --
             torch.save({
-                "epoch": epoch,
                 "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "loss": valid_epoch_loss,
             }, f"{output_path}model-fold{fold}.pth")  # 途中再開したい場合はmodel.state_dict()以外も必要 --
+            ## torch.save({
+            ##     "epoch": epoch,
+            ##     "model_state_dict": model.state_dict(),
+            ##     "optimizer_state_dict": optimizer.state_dict(),
+            ##     "loss": valid_epoch_loss,
+            ## }, f"{output_path}model-fold{fold}.pth")  # 途中再開したい場合はmodel.state_dict()以外も必要 --
             Write_log(log, f"Model Saved"); print()
 
 
