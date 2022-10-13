@@ -18,7 +18,7 @@ from torch.nn import functional as F
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
     AutoTokenizer, T5Tokenizer, BertTokenizer,
-    AutoModelForMaskedLM, 
+    AutoModelForMaskedLM, AutoModelForCausalLM,
 )
 
 from tqdm import tqdm
@@ -104,7 +104,7 @@ def juman_parse(text):
 
 
 def define_tokenizer(model_name: str):
-    if model_name in ["rinna/japanese-roberta-base", "rinna/japanese-gpt-1b"]:
+    if model_name in ["rinna/japanese-roberta-base", "rinna/japanese-gpt-1b", "rinna/japanese-gpt2-medium"]:
         tokenizer = T5Tokenizer.from_pretrained(
             model_name
         )
@@ -202,6 +202,13 @@ class HateSpeechModel(nn.Module):
                 output_attentions=True, output_hidden_states=True
             )
             self.hidden_size = 2048
+        elif model_name in ["rinna/japanese-gpt2-medium"]:
+            #self.model = AutoModelForCausalLM.from_pretrained(
+            self.model = AutoModel.from_pretrained(
+                model_name,
+                output_attentions=True, output_hidden_states=True,
+                )
+            self.hidden_size = 1024
         else:
             self.model = AutoModel.from_pretrained(
                 model_name,

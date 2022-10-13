@@ -34,7 +34,8 @@ test_loader = DataLoader(test_dataset, batch_size=settings.test_batch_size, num_
 
 preds_list = []
 for fold in range(0, settings.folds):
-    model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
+    #model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
+    model_id = "model"
     preds = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], test_loader, device)
     preds_list.append(preds)
 
