@@ -49,8 +49,8 @@
 
 
 # trial --
-#python bert_run_train.py --run_id "tmp" --folds 2 --trial True
-#python bert_run_test.py --run_id "tmp"
+python bert_run_train.py --run_id "tmp" --folds 2 --trial True
+python bert_run_test.py --run_id "tmp"
 
 ## # prediction --
 #python bert_run_test.py --run_id "bert_baseline"
@@ -75,4 +75,4 @@
 #python_bert_run_test.py --run_id "roberta_large_cat4_batch64"
 #python bert_run_test.py --run_id "roberta_large_fold4"
 
-python bert_run_test.py --run_id "roberta_large_amp"
+#python bert_run_test.py --run_id "roberta_large_amp"
