@@ -35,7 +35,7 @@ parser.add_argument("--folds", type=int, default=5)
 parser.add_argument("--train_batch_size", type=int, default=32)
 parser.add_argument("--valid_batch_size", type=int, default=64)
 parser.add_argument("--test_batch_size", type=int, default=64)
-parser.add_argument("--use_apm", type=bool, default=True)
+parser.add_argument("--use_amp", type=bool, default=True)
 parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking")
 parser.add_argument("--model_custom_header", type=str, default="max_pooling")
 parser.add_argument("--max_length", type=int, default=76)
@@ -63,7 +63,7 @@ settings["folds"] = args.folds
 settings["train_batch_size"] = args.train_batch_size
 settings["valid_batch_size"] = args.valid_batch_size
 settings["test_batch_size"] = args.test_batch_size
-settings["use_apm"] = args.use_apm
+settings["use_amp"] = args.use_amp
 # bert settings --
 settings["model_name"] = args.model_name
 settings["model_custom_header"] = args.model_custom_header
@@ -180,7 +180,9 @@ for fold in range(0, settings.folds):
     scheduler = fetch_scheduler(optimizer=optimizer, scheduler=settings.scheduler_name)
 
     model, history = run_training(
-        model, train_loader, valid_loader, optimizer, scheduler, settings.n_accumulate, device, settings.epochs, fold, settings.output_path, log
+        model, train_loader, valid_loader, 
+        optimizer, scheduler, settings.n_accumulate, device, settings.use_amp, 
+        settings.epochs, fold, settings.output_path, log
     )
 
     del model, history, train_loader, valid_loader

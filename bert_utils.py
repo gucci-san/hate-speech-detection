@@ -299,7 +299,7 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
     return scheduler
 
 
-def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, n_accumulate, use_amp=True):
+def train_one_epoch(model, optimizer, scheduler, dataloader, device, use_amp, epoch, n_accumulate):
     model.train()
 
     scaler = GradScaler(enabled=use_amp)    
@@ -378,7 +378,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
     return epoch_loss
 
 
-def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, num_epochs, fold, output_path, log=None):
+def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, use_amp, num_epochs, fold, output_path, log=None):
 
     if torch.cuda.is_available():
         Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
@@ -394,7 +394,7 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
         train_epoch_loss = train_one_epoch(
             model, optimizer, scheduler,
             dataloader=train_loader,
-            device=device, epoch=epoch,
+            device=device, use_amp=use_amp, epoch=epoch,
             n_accumulate=n_accumulate
         )
 
