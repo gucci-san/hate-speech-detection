@@ -16,7 +16,7 @@ parser.add_argument("--run_id", type=str, default="tmp")
 args, unknown = parser.parse_known_args()
 
 # settings, fine-tuningしたモデル, モデル作成時に前処理したtest_dfを読み込み -- 
-output_path = f"./output/{args.run_id}/"
+output_path = f"{output_root}{args.run_id}/"
 settings = pd.read_json(f"{output_path}settings.json", typ="series")
 model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
 test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
@@ -34,7 +34,8 @@ test_loader = DataLoader(test_dataset, batch_size=settings.test_batch_size, num_
 
 preds_list = []
 for fold in range(0, settings.folds):
-    model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
+    #model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
+    model_id = "model"
     preds = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], test_loader, device)
     preds_list.append(preds)
 

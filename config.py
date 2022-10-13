@@ -5,6 +5,8 @@ SEED = 42
 data_path = "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/"
 input_root = "./input/"
 output_root = "./output/"
+#output_root = "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/output/"
+experiment_root = "./experiment/"
 
 id_name = "id"
 label_name = "label"

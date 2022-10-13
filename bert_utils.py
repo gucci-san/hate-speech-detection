@@ -1,3 +1,4 @@
+from faulthandler import is_enabled
 import os, gc, random, time, copy
 import warnings; warnings.simplefilter("ignore")
 import numpy as np
@@ -14,11 +15,12 @@ import torch.nn as nn
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
+from torch.cuda.amp import GradScaler, autocast
 
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
     AutoTokenizer, T5Tokenizer, BertTokenizer,
-    AutoModelForMaskedLM, 
+    AutoModelForMaskedLM, AutoModelForCausalLM,
 )
 
 from tqdm import tqdm
@@ -104,7 +106,7 @@ def juman_parse(text):
 
 
 def define_tokenizer(model_name: str):
-    if model_name in ["rinna/japanese-roberta-base", "rinna/japanese-gpt-1b"]:
+    if model_name in ["rinna/japanese-roberta-base", "rinna/japanese-gpt-1b", "rinna/japanese-gpt2-medium"]:
         tokenizer = T5Tokenizer.from_pretrained(
             model_name
         )
@@ -202,6 +204,13 @@ class HateSpeechModel(nn.Module):
                 output_attentions=True, output_hidden_states=True
             )
             self.hidden_size = 2048
+        elif model_name in ["rinna/japanese-gpt2-medium"]:
+            #self.model = AutoModelForCausalLM.from_pretrained(
+            self.model = AutoModel.from_pretrained(
+                model_name,
+                output_attentions=True, output_hidden_states=True,
+                )
+            self.hidden_size = 1024
         else:
             self.model = AutoModel.from_pretrained(
                 model_name,
@@ -234,26 +243,26 @@ class HateSpeechModel(nn.Module):
             out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
             out = self.dropout(out)
             outputs = self.fc(out)
-            outputs = self.softmax(outputs)
+            #outputs = self.softmax(outputs)
 
         elif self.custom_header == "conv":
             last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
             cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
             cnn_embeddings = self.cnn2(cnn_embeddings)
             outputs = cnn_embeddings.max(axis=2)[0]
-            outputs = self.softmax(outputs)
+            #outputs = self.softmax(outputs)
 
         elif self.custom_header == "lstm":
             last_hidden_state = out["hidden_states"][-1]
             out = self.lstm(last_hidden_state, None)[0]
             out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
             outputs = self.fc(out)
-            outputs = self.softmax(outputs)
+            #outputs = self.softmax(outputs)
 
         elif self.custom_header == "concatenate-4":
             out = torch.cat([out["hidden_states"][-1*i][:, 0, :] for i in range(1, 4+1)], dim=1)
             outputs = self.fc_4(out)
-            outputs = self.softmax(outputs)
+            #outputs = self.softmax(outputs)
 
         return outputs
 
@@ -275,7 +284,8 @@ def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_len
 
 
 def criterion(outputs, targets):
-    loss_f = nn.BCELoss()
+    #loss_f = nn.BCELoss()
+    loss_f = nn.BCEWithLogitsLoss()
     return loss_f(outputs, targets)
 
 
@@ -289,8 +299,10 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
     return scheduler
 
 
-def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, n_accumulate):
+def train_one_epoch(model, optimizer, scheduler, dataloader, device, use_amp, epoch, n_accumulate):
     model.train()
+
+    scaler = GradScaler(enabled=use_amp)    
 
     dataset_size = 0
     running_loss = 0.0
@@ -303,25 +315,34 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, epoch, n_ac
 
         batch_size = input_ids.size(0)
 
-        outputs = model(input_ids, attention_mask)
+        with autocast(enabled=use_amp):
+            outputs = model(input_ids, attention_mask)
+            loss = criterion(outputs, targets)
+            loss = loss / np.float(n_accumulate)
+            scaler.scale(loss).backward()
+            #loss.backward()
 
-        loss = criterion(outputs, targets)
-        loss = loss / np.float(n_accumulate)
-        loss.backward()
+            if (step+1) % n_accumulate == 0:
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
 
-        if (step+1) % n_accumulate == 0:
-            optimizer.step()
-            optimizer.zero_grad()
+                if scheduler is not None:
+                    scheduler.step()
 
-            if scheduler is not None:
-                scheduler.step()
+#        if (step+1) % n_accumulate == 0:
+#            optimizer.step()
+#            optimizer.zero_grad()
+#
+#            if scheduler is not None:
+#                scheduler.step()
 
-        running_loss += (loss.item()*batch_size)
-        dataset_size += batch_size
+            running_loss += (loss.item()*batch_size)
+            dataset_size += batch_size
 
-        epoch_loss = running_loss / dataset_size
+            epoch_loss = running_loss / dataset_size
 
-        bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"])
+            bar.set_postfix(Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"])
     
     gc.collect()
     return epoch_loss
@@ -357,7 +378,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
     return epoch_loss
 
 
-def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, num_epochs, fold, output_path, log=None):
+def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, use_amp, num_epochs, fold, output_path, log=None):
 
     if torch.cuda.is_available():
         Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
@@ -373,7 +394,7 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
         train_epoch_loss = train_one_epoch(
             model, optimizer, scheduler,
             dataloader=train_loader,
-            device=device, epoch=epoch,
+            device=device, use_amp=use_amp, epoch=epoch,
             n_accumulate=n_accumulate
         )
 
@@ -392,12 +413,19 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
             best_epoch_loss = valid_epoch_loss
             best_model_wts = copy.deepcopy(model.state_dict())
 
+            # 提出ファイルを圧縮前合計25GBにしないといけないので、いらないもの保存できない --
             torch.save({
-                "epoch": epoch,
                 "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "loss": valid_epoch_loss,
-            }, f"{output_path}model-fold{fold}.pth")  # 途中再開したい場合はmodel.state_dict()以外も必要 --
+            }, f"{output_path}model-fold{fold}.pth")
+
+            # cf.) 途中再開したい場合はmodel.state_dict()以外も必要なものアリ --
+            ## torch.save({
+            ##     "epoch": epoch,
+            ##     "model_state_dict": model.state_dict(),
+            ##     "optimizer_state_dict": optimizer.state_dict(),
+            ##     "loss": valid_epoch_loss,
+            ## }, f"{output_path}model-fold{fold}.pth")
+            
             Write_log(log, f"Model Saved"); print()
 
 

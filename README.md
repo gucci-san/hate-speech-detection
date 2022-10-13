@@ -14,6 +14,9 @@
 * dask, pandarallelは使い得
     * 特にSeries.mapは結構使いがちだけど、pandaralellでだいぶ早くなる
 * 強い人はみんなtransformerのgithubからコード引っ張って手元で書いてた
+* amp早すぎ
+    * roberta-largeのfold(1/5), ampなしで8min, ampありで4minくらい, 理論上も2倍くらい早いらしいので妥当
+        * CV結構変わってますけど、LBは0.727->0.723, まあ誤差の範囲かなと
 
 ### 確認したい事項
 * 結局BERTの中身わかってないからなあ......
