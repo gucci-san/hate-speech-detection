@@ -128,7 +128,10 @@ elif settings.train_data == "raw+test_pseudo":
 
 # train_testカラムを作成 --
 df[label_name] = 0
-df.loc[train_shape:, label_name] = 1
+#df.loc[train_shape:, label_name] = 1
+df.loc[int(df.shape[0]/2):, label_name] = 1
+Debug_print(df["train_test"].value_counts())
+
 
 # preprocess --
 df["clean_text"] = df["text"].map(lambda x: clean_text(x))
@@ -246,4 +249,4 @@ all_f1 = f1_score(train_df[label_name], train_df.model_pred)
 all_acc = accuracy_score(train_df[label_name], train_df.model_pred)
 
 # save oof --
-train_df.reset_index(drop=False).to_feather(f"{settings.output_path}train_df_f1{all_f1:.3f}_acc{all_acc:.3f}.feather")
+train_df.reset_index(drop=False).to_feather(f"{settings.output_path}adversarial_df.feather")
