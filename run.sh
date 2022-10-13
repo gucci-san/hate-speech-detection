@@ -45,14 +45,16 @@
 ## roberta-largeをampで回すとどうなる？ --
 #python bert_run_train.py --run_id "roberta_large_amp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 
+#python bert_run_train.py --run_id "roberta_large_msd_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_mixout_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 
 
 
 ## trial --
-#python bert_run_train.py --run_id "tmp" --folds 2 --trial True
+#python bert_run_train.py --run_id "tmp" --folds 2 --trial True --model_custom_header "max_pooling"
 #python bert_run_test.py --run_id "tmp"
 
-## # prediction --
+## # prediction -
 #python bert_run_test.py --run_id "bert_baseline"
 #python bert_run_test.py --run_id "roberta_baseline"
 #python bert_run_test.py --run_id "electra_baseline"
@@ -76,3 +78,6 @@
 #python bert_run_test.py --run_id "roberta_large_fold4"
 
 #python bert_run_test.py --run_id "roberta_large_amp"
+#python bert_run_test.py --run_id "roberta_large_msd_cat4"
+
+python bert_run_test.py --run_id "roberta_large_mixout_cat4"

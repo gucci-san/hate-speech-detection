@@ -16,6 +16,8 @@ from glob import glob
 from config import *
 from bert_utils import *
 
+from mixout import *
+
 import argparse
 
 
@@ -173,6 +175,7 @@ for fold in range(0, settings.folds):
 
     # Model construct --
     model = HateSpeechModel(model_name=settings.model_name, num_classes=settings.num_classes, custom_header=settings.model_custom_header)
+    model = replace_mixout(model)
     model.to(device)
 
     # Define Optimizer and Scheduler --

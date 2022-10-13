@@ -1,5 +1,4 @@
-from faulthandler import is_enabled
-import os, gc, random, time, copy
+import os, gc, random, time, copy, math
 import warnings; warnings.simplefilter("ignore")
 import numpy as np
 
@@ -12,6 +11,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"  # avoid juman warnings --
 
 import torch
 import torch.nn as nn
+import torch.nn.init as init
+from torch.nn import Parameter
+from torch.autograd.function import InplaceFunction
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
@@ -172,7 +174,7 @@ class HateSpeechDataset(Dataset):
 
 
 class HateSpeechModel(nn.Module):
-    def __init__(self, model_name, num_classes, custom_header=None):
+    def __init__(self, model_name, num_classes, custom_header=None, n_msd=6):
         super(HateSpeechModel, self).__init__()
         if model_name in ["rinna/japanese-roberta-base"]:
             self.model = RobertaForMaskedLM.from_pretrained(
@@ -205,7 +207,6 @@ class HateSpeechModel(nn.Module):
             )
             self.hidden_size = 2048
         elif model_name in ["rinna/japanese-gpt2-medium"]:
-            #self.model = AutoModelForCausalLM.from_pretrained(
             self.model = AutoModel.from_pretrained(
                 model_name,
                 output_attentions=True, output_hidden_states=True,
@@ -220,8 +221,9 @@ class HateSpeechModel(nn.Module):
 
         self.model_name = model_name
         self.dropout = nn.Dropout(p=0.2)
+        self.dropouts = nn.ModuleList([nn.Dropout(p=0.2) for _ in range(n_msd)])
+        self.n_msd = n_msd
         self.fc = nn.Linear(self.hidden_size, num_classes)
-        self.softmax = nn.Softmax()
 
         if custom_header == "conv":
             self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
@@ -241,28 +243,29 @@ class HateSpeechModel(nn.Module):
         # https://www.ai-shift.co.jp/techblog/2145 --
         if self.custom_header == "max_pooling":
             out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
-            out = self.dropout(out)
-            outputs = self.fc(out)
-            #outputs = self.softmax(outputs)
+            #out = self.dropout(out)
+            #outputs = self.fc(out)
+            outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
 
         elif self.custom_header == "conv":
             last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
             cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
             cnn_embeddings = self.cnn2(cnn_embeddings)
-            outputs = cnn_embeddings.max(axis=2)[0]
-            #outputs = self.softmax(outputs)
+            #outputs = cnn_embeddings.max(axis=2)[0]
+            out = cnn_embeddings.max(axis=2)[0]
+            outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
 
         elif self.custom_header == "lstm":
             last_hidden_state = out["hidden_states"][-1]
             out = self.lstm(last_hidden_state, None)[0]
             out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
-            outputs = self.fc(out)
-            #outputs = self.softmax(outputs)
+            outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            #outputs = self.fc(out)
 
         elif self.custom_header == "concatenate-4":
             out = torch.cat([out["hidden_states"][-1*i][:, 0, :] for i in range(1, 4+1)], dim=1)
+            #outputs = sum([self.fc_4(dropout(out)) for dropout in self.dropouts])/self.n_msd
             outputs = self.fc_4(out)
-            #outputs = self.softmax(outputs)
 
         return outputs
 
@@ -320,7 +323,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, use_amp, ep
             loss = criterion(outputs, targets)
             loss = loss / np.float(n_accumulate)
             scaler.scale(loss).backward()
-            #loss.backward()
 
             if (step+1) % n_accumulate == 0:
                 scaler.step(optimizer)
@@ -329,13 +331,6 @@ def train_one_epoch(model, optimizer, scheduler, dataloader, device, use_amp, ep
 
                 if scheduler is not None:
                     scheduler.step()
-
-#        if (step+1) % n_accumulate == 0:
-#            optimizer.step()
-#            optimizer.zero_grad()
-#
-#            if scheduler is not None:
-#                scheduler.step()
 
             running_loss += (loss.item()*batch_size)
             dataset_size += batch_size
