@@ -42,12 +42,14 @@
 ## roberta-large_cat4 + pseudo-label
 #python bert_run_train.py --run_id "roberta_large_cat4_pseudo" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+test_pseudo"
 
+## roberta-largeをampで回すとどうなる？ --
+#python bert_run_train.py --run_id "roberta_large_amp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 
 
 
 
 # trial --
-#python bert_run_train.py --run_id "tmp" --folds 2 --trial True --train_data "raw+test_pseudo"
+#python bert_run_train.py --run_id "tmp" --folds 2 --trial True
 #python bert_run_test.py --run_id "tmp"
 
 ## # prediction --
@@ -72,3 +74,5 @@
 #python bert_run_test.py --run_id "roberta_large_cat4_batch16"
 #python_bert_run_test.py --run_id "roberta_large_cat4_batch64"
 #python bert_run_test.py --run_id "roberta_large_fold4"
+
+python bert_run_test.py --run_id "roberta_large_amp"
