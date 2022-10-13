@@ -48,9 +48,9 @@
 
 
 
-# trial --
-python bert_run_train.py --run_id "tmp" --folds 2 --trial True
-python bert_run_test.py --run_id "tmp"
+## trial --
+#python bert_run_train.py --run_id "tmp" --folds 2 --trial True
+#python bert_run_test.py --run_id "tmp"
 
 ## # prediction --
 #python bert_run_test.py --run_id "bert_baseline"

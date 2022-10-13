@@ -128,7 +128,7 @@ def define_tokenizer(model_name: str):
 
 
 class HateSpeechDataset(Dataset):
-    def __init__(self, df, tokenizer, max_length, num_classes, text_col="text", isTrain=True):
+    def __init__(self, df, tokenizer, max_length, num_classes, text_col="text", isTrain=True, label_name=label_name):
         self.df = df
         self.max_len = max_length
         self.tokenizer = tokenizer
@@ -267,12 +267,12 @@ class HateSpeechModel(nn.Module):
         return outputs
 
 
-def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_length, num_classes, text_col="text"):
+def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_length, num_classes, text_col="text", label_name=label_name):
     train_df = df[df.kfold != fold].reset_index(drop=True)
     valid_df = df[df.kfold == fold].reset_index(drop=True)
 
-    train_dataset = HateSpeechDataset(train_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col)
-    valid_dataset = HateSpeechDataset(valid_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col)
+    train_dataset = HateSpeechDataset(train_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col, label_name=label_name)
+    valid_dataset = HateSpeechDataset(valid_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col, label_name=label_name)
 
     train_loader = DataLoader(
         train_dataset, batch_size=trn_batch_size, num_workers=2, shuffle=True, pin_memory=True, drop_last=True
