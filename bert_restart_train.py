@@ -28,59 +28,21 @@ import argparse
 # ====================================== #
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, default=None)
-parser.add_argument("--num_classes", type=int, default=2)
-parser.add_argument("--train_data", type=str, default="raw")
-parser.add_argument("--epochs", type=int, default=1)
-parser.add_argument("--folds", type=int, default=5)
-parser.add_argument("--train_batch_size", type=int, default=32)
-parser.add_argument("--valid_batch_size", type=int, default=64)
-parser.add_argument("--test_batch_size", type=int, default=64)
-parser.add_argument("--use_amp", type=bool, default=True)
-parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking")
-parser.add_argument("--model_custom_header", type=str, default="max_pooling")
-parser.add_argument("--max_length", type=int, default=76)
-parser.add_argument("--dropout", type=float, default=0.2)
-parser.add_argument("--mixout", type=bool, default=False)
-parser.add_argument("--learning_rate", type=float, default=1e-5)
-parser.add_argument("--scheduler_name", type=str, default="CosineAnnealingLR")
-parser.add_argument("--min_lr", type=float, default=1e-6)
-parser.add_argument("--T_max", type=int, default=500)
-parser.add_argument("--weight_decay", type=float, default=1e-5)
-parser.add_argument("--n_accumulate", type=int, default=1)
-parser.add_argument("--remark", type=str, default=None)
-parser.add_argument("--trial", type=bool, default=False)
+parser.add_argument("--model_fold", type=int, default=0)
 args, unknown = parser.parse_known_args()
 
+# settings, fine-tuningしたモデル, モデル作成時に前処理したtest_dfを読み込み -- 
+output_path = f"{output_root}{args.run_id}/"
+settings = pd.read_json(f"{output_path}settings.json", typ="series")
+#model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
+checkpoint_path = f"{settings.output_path}checkpoint-fold{args.model_fold}.pth"
 
-settings = pd.Series(dtype=object)
-# project settings --
-settings["run_id"] = args.run_id
-settings["num_classes"] = args.num_classes
-settings["output_path"] = f"{output_root}{settings.run_id}/"
-# training settings --
-settings["train_data"] = args.train_data
-settings["epochs"] = args.epochs
-settings["folds"] = args.folds
-settings["train_batch_size"] = args.train_batch_size
-settings["valid_batch_size"] = args.valid_batch_size
-settings["test_batch_size"] = args.test_batch_size
-settings["use_amp"] = args.use_amp
-# bert settings --
-settings["model_name"] = args.model_name
-settings["model_custom_header"] = args.model_custom_header
-settings["max_length"] = args.max_length
-settings["dropout"] = args.dropout
-settings["mixout"] = args.mixout
-# optimizer settings --
-settings["learning_rate"] = args.learning_rate
-settings["scheduler_name"] = args.scheduler_name
-settings["min_lr"] = args.min_lr
-settings["T_max"] = args.T_max
-settings["weight_decay"] = args.weight_decay
-settings["n_accumulate"] = args.n_accumulate
-# experiment remarks --
-settings["remark"] = args.remark
-settings["seed"] = SEED
+
+print(checkpoint_path)
+exit()
+
+test_df = pd.read_feather(f"{settings.output_path}test_df.feather")
+
 
 
 # run_idが重複したらlogが消えてしまうので、プログラムごと止めるようにする --
@@ -94,11 +56,8 @@ else:
 
 
 # 計算時点でのpyファイル, settingsを保存 --
-if not os.path.exists(f"{settings.output_path}src/"):
-    os.mkdir(f"{settings.output_path}src/")
-
-os.system(f"cp ./*py {settings.output_path}src/")
-os.system(f"cp ./*sh {settings.output_path}src/")
+os.system(f"cp ./*py {settings.output_path}")
+os.system(f"cp ./*sh {settings.output_path}")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 
@@ -171,8 +130,7 @@ for fold in range(0, settings.folds):
     model, history = run_training(
         model, train_loader, valid_loader, 
         optimizer, scheduler, settings.n_accumulate, device, settings.use_amp, 
-        settings.epochs, fold, settings.output_path,
-        log, save_checkpoint=True
+        settings.epochs, fold, settings.output_path, log
     )
 
     del model, history, train_loader, valid_loader

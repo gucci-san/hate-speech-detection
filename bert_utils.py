@@ -13,13 +13,8 @@ import neologdn
 from pyknp import Juman, BList, KNP
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # avoid juman warnings --
 
-from sklearn.model_selection import StratifiedKFold
-
 import torch
 import torch.nn as nn
-import torch.nn.init as init
-from torch.nn import Parameter
-from torch.autograd.function import InplaceFunction
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
@@ -28,7 +23,6 @@ from torch.cuda.amp import GradScaler, autocast
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
     AutoTokenizer, T5Tokenizer, BertTokenizer,
-    AutoModelForMaskedLM, AutoModelForCausalLM,
 )
 
 from tqdm import tqdm
@@ -413,7 +407,8 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
 def run_training(
     model, train_loader, valid_loader, 
     optimizer, scheduler, n_accumulate, device, 
-    use_amp, num_epochs, fold, output_path, log=None
+    use_amp, num_epochs, fold, output_path,
+    log=None, save_checkpoint=False
     ):
 
     if torch.cuda.is_available():
@@ -450,17 +445,17 @@ def run_training(
             best_model_wts = copy.deepcopy(model.state_dict())
 
             # 提出ファイルを圧縮前合計25GBにしないといけないので、いらないもの保存できない --
-            torch.save({
-                "model_state_dict": model.state_dict(),
-            }, f"{output_path}model-fold{fold}.pth")
-
-            # cf.) 途中再開したい場合はmodel.state_dict()以外も必要なものアリ --
-            ## torch.save({
-            ##     "epoch": epoch,
-            ##     "model_state_dict": model.state_dict(),
-            ##     "optimizer_state_dict": optimizer.state_dict(),
-            ##     "loss": valid_epoch_loss,
-            ## }, f"{output_path}model-fold{fold}.pth")
+            if save_checkpoint:
+                torch.save({
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "loss": valid_epoch_loss,
+                }, f"{output_path}checkpoint-fold{fold}.pth")
+            else:
+                torch.save({
+                    "model_state_dict": model.state_dict(),
+                }, f"{output_path}model-fold{fold}.pth")
             
             Write_log(log, f"Model Saved"); print()
 
