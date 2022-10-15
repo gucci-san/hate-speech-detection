@@ -243,29 +243,28 @@ class HateSpeechModel(nn.Module):
         # https://www.ai-shift.co.jp/techblog/2145 --
         if self.custom_header == "max_pooling":
             out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
-            #out = self.dropout(out)
-            #outputs = self.fc(out)
-            outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            outputs = self.fc(out)
+            #outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
 
         elif self.custom_header == "conv":
             last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
             cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
             cnn_embeddings = self.cnn2(cnn_embeddings)
-            #outputs = cnn_embeddings.max(axis=2)[0]
-            out = cnn_embeddings.max(axis=2)[0]
-            outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            outputs = cnn_embeddings.max(axis=2)[0]
+            #out = cnn_embeddings.max(axis=2)[0]
+            #outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
 
         elif self.custom_header == "lstm":
             last_hidden_state = out["hidden_states"][-1]
             out = self.lstm(last_hidden_state, None)[0]
             out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
-            outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
-            #outputs = self.fc(out)
+            outputs = self.fc(out)
+            #outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
 
         elif self.custom_header == "concatenate-4":
             out = torch.cat([out["hidden_states"][-1*i][:, 0, :] for i in range(1, 4+1)], dim=1)
-            #outputs = sum([self.fc_4(dropout(out)) for dropout in self.dropouts])/self.n_msd
             outputs = self.fc_4(out)
+            #outputs = sum([self.fc_4(dropout(out)) for dropout in self.dropouts])/self.n_msd
 
         return outputs
 

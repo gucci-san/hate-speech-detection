@@ -75,9 +75,9 @@
 #
 #python bert_run_test.py --run_id "roberta_large_cat4_batch16"
 #python_bert_run_test.py --run_id "roberta_large_cat4_batch64"
-#python bert_run_test.py --run_id "roberta_large_fold4"
+python bert_run_test.py --run_id "roberta_large_fold4"
 
 #python bert_run_test.py --run_id "roberta_large_amp"
 #python bert_run_test.py --run_id "roberta_large_msd_cat4"
 
-python bert_run_test.py --run_id "roberta_large_mixout_cat4"
+#python bert_run_test.py --run_id "roberta_large_mixout_cat4"
