@@ -362,7 +362,11 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
     return epoch_loss
 
 
-def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, use_amp, num_epochs, fold, output_path, log=None):
+def run_training(
+    model, train_loader, valid_loader, 
+    optimizer, scheduler, n_accumulate, device, 
+    use_amp, num_epochs, fold, output_path, log=None
+    ):
 
     if torch.cuda.is_available():
         Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
