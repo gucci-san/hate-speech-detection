@@ -50,9 +50,9 @@
 
 
 
-## trial --
-#python bert_run_train.py --run_id "tmp" --folds 2 --trial True --model_custom_header "max_pooling"
-#python bert_run_test.py --run_id "tmp"
+# trial --
+python bert_run_train.py --run_id "tmp" --folds 2 --trial True --model_custom_header "max_pooling"
+python bert_run_test.py --run_id "tmp"
 
 ## # prediction -
 #python bert_run_test.py --run_id "bert_baseline"
@@ -75,7 +75,7 @@
 #
 #python bert_run_test.py --run_id "roberta_large_cat4_batch16"
 #python_bert_run_test.py --run_id "roberta_large_cat4_batch64"
-python bert_run_test.py --run_id "roberta_large_fold4"
+#python bert_run_test.py --run_id "roberta_large_fold4"
 
 #python bert_run_test.py --run_id "roberta_large_amp"
 #python bert_run_test.py --run_id "roberta_large_msd_cat4"
