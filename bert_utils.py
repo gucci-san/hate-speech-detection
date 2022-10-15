@@ -1,6 +1,10 @@
 import os, gc, random, time, copy, math
 import warnings; warnings.simplefilter("ignore")
+import pandas as pd
 import numpy as np
+
+from pandarallel import pandarallel
+pandarallel.initialize(progress_bar=True)
 
 import re
 import demoji
@@ -8,6 +12,8 @@ import neologdn
 
 from pyknp import Juman, BList, KNP
 os.environ["TOKENIZERS_PARALLELISM"] = "false"  # avoid juman warnings --
+
+from sklearn.model_selection import StratifiedKFold
 
 import torch
 import torch.nn as nn
@@ -98,14 +104,56 @@ def clean_text(text: str) -> str:
     return text
 
 
+def prepare_dataframe(train_data):
+    if train_data == "raw":
+        train = pd.read_csv(data_path+"train.csv")
+        test = pd.read_csv(data_path+"test.csv")
+        df = pd.concat([train, test]).reset_index(drop=True)
+        train_shape = train.shape[0]
+    
+    elif train_data == "raw+test_pseudo":
+        train = pd.read_csv(data_path+"train.csv")
+        test_pseudo = pd.read_feather(f"{input_root}pseudo_label_base/test_pseudo_labeled.feather")
+        test_pseudo[label_name] = 1 # hard label --
+        train = pd.concat([train, test_pseudo]).reset_index(drop=True)
+        test = pd.read_csv(data_path+"test.csv")
+        df = pd.concat([train, test]).reset_index(drop=True)
+        train_shape = train.shape[0]
+
+    else:
+        Debug_print(f"NOT implemented : train_data=={train_data}")
+        assert False
+    
+    return df, train_shape
+
+
 def juman_parse(text):
     words = ""
     jumanpp = Juman()
     result = jumanpp.analysis(text)
     for mrp in result.mrph_list():
         words += (mrp.midasi + " ")
+    
     return words[:-1]  # last " " omit by [:-1] -- 
 
+
+def preprocess_text(df, train_shape, model_name):
+    df["clean_text"] = df["text"].map(lambda x: clean_text(x))
+    if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+        df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
+    train_df = df.loc[:train_shape-1, :]
+    test_df = df.loc[train_shape:, :]
+    
+    return train_df, test_df
+
+
+def make_folds(split, train_df, label_name, fold_colname="kfold"):
+    for fold, (_, val_index) in enumerate(split):
+        train_df.loc[val_index, fold_colname] = int(fold)
+    train_df[fold_colname] = train_df[fold_colname].astype(int)
+    
+    return train_df
+    
 
 def define_tokenizer(model_name: str):
     if model_name in ["rinna/japanese-roberta-base", "rinna/japanese-gpt-1b", "rinna/japanese-gpt2-medium"]:

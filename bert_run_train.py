@@ -1,3 +1,4 @@
+from multiprocessing.spawn import prepare
 import pandas as pd
 import torch
 import torch.cuda.amp as amp
@@ -109,38 +110,15 @@ settings.to_json(f"{settings.output_path}settings.json", indent=4)
 #                                        #
 # ====================================== #
 # load data --
-# ## -> df = pd.concat([train, ..., test]);
-# ## -> train_shape = train.shape[0]
-if settings.train_data == "raw":
-    train = pd.read_csv(data_path+"train.csv")
-    test = pd.read_csv(data_path+"test.csv")
-    df = pd.concat([train, test]).reset_index(drop=True)
-    train_shape = train.shape[0]
-    del train, test; _ = gc.collect()
-
-elif settings.train_data == "raw+test_pseudo":
-    train = pd.read_csv(data_path+"train.csv")
-    test_pseudo = pd.read_feather(f"{input_root}pseudo_label_base/test_pseudo_labeled.feather")
-    test_pseudo[label_name] = 1 # hard label --
-    train = pd.concat([train, test_pseudo]).reset_index(drop=True)
-    test = pd.read_csv(data_path+"test.csv")
-    df = pd.concat([train, test]).reset_index(drop=True)
-    train_shape = train.shape[0]
-    del train, test_pseudo, test; _ = gc.collect()
+df, train_shape = prepare_dataframe(train_data=settings.train_data)
 
 # preprocess --
-df["clean_text"] = df["text"].map(lambda x: clean_text(x))
-if settings.model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-    df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
-train_df = df.loc[:train_shape-1, :]
-test_df = df.loc[train_shape:, :]
+train_df, test_df = preprocess_text(df, train_shape, settings.model_name)
 
 # make folds --
 skf = StratifiedKFold(n_splits=settings.folds, shuffle=True, random_state=SEED)
 split = skf.split(train_df, train_df[label_name])
-for fold, (_, val_index) in enumerate(skf.split(X=train_df, y=train_df[label_name])):
-    train_df.loc[val_index, "kfold"] = int(fold)
-train_df["kfold"] = train_df["kfold"].astype(int)
+train_df = make_folds(split, train_df, label_name=label_name)
 
 # define tokenizer --
 tokenizer = define_tokenizer(settings.model_name)
