@@ -174,57 +174,39 @@ class HateSpeechDataset(Dataset):
 
 
 class HateSpeechModel(nn.Module):
-    def __init__(self, model_name, num_classes, custom_header=None, n_msd=6):
+    def __init__(self, model_name, num_classes, custom_header=None, dropout=0.2, n_msd=None):
         super(HateSpeechModel, self).__init__()
+
+        # pretrained model settings --
         if model_name in ["rinna/japanese-roberta-base"]:
-            self.model = RobertaForMaskedLM.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True,
-                )
+            self.model = RobertaForMaskedLM.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 768
         elif model_name in ["ganchengguang/Roformer-base-japanese"]:
-            self.model = RoFormerModel.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True,
-                )
+            self.model = RoFormerModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 768
         elif model_name in ["cl-tohoku/bert-large-japanese"]:
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True,
-                )
+            self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 1024
         elif model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True,
-                )
+            self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 1024
         elif model_name in ["rinna/japanese-gpt-1b"]:
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True
-            )
+            self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 2048
         elif model_name in ["rinna/japanese-gpt2-medium"]:
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True,
-                )
+            self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 1024
         else:
-            self.model = AutoModel.from_pretrained(
-                model_name,
-                output_attentions=True, output_hidden_states=True,
-                )
+            self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 768
 
         self.model_name = model_name
-        self.dropout = nn.Dropout(p=0.2)
-        self.dropouts = nn.ModuleList([nn.Dropout(p=0.2) for _ in range(n_msd)])
+        self.dropout = nn.Dropout(p=dropout)
+        self.dropouts = nn.ModuleList([nn.Dropout(p=dropout) for _ in range(n_msd)]) if n_msd is not None else None
         self.n_msd = n_msd
         self.fc = nn.Linear(self.hidden_size, num_classes)
 
+        # bert custom-header settings --
         if custom_header == "conv":
             self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
             self.cnn2 = nn.Conv1d(256, num_classes, kernel_size=2, padding=1)
@@ -243,28 +225,36 @@ class HateSpeechModel(nn.Module):
         # https://www.ai-shift.co.jp/techblog/2145 --
         if self.custom_header == "max_pooling":
             out = out["hidden_states"][-1].max(axis=1)[0]  # last_hidden_state + max_pooling --
-            outputs = self.fc(out)
-            #outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            if self.n_msd is not None:
+                outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            else:
+                outputs = self.fc(out)
 
         elif self.custom_header == "conv":
             last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
             cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
             cnn_embeddings = self.cnn2(cnn_embeddings)
-            outputs = cnn_embeddings.max(axis=2)[0]
-            #out = cnn_embeddings.max(axis=2)[0]
-            #outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            if self.n_msd is not None:
+                out = cnn_embeddings.max(axis=2)[0]
+                outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            else:
+                outputs = cnn_embeddings.max(axis=2)[0]
 
         elif self.custom_header == "lstm":
             last_hidden_state = out["hidden_states"][-1]
             out = self.lstm(last_hidden_state, None)[0]
             out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
-            outputs = self.fc(out)
-            #outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            if self.n_msd is not None:
+                outputs = sum([self.fc(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            else:
+                outputs = self.fc(out)
 
         elif self.custom_header == "concatenate-4":
             out = torch.cat([out["hidden_states"][-1*i][:, 0, :] for i in range(1, 4+1)], dim=1)
-            outputs = self.fc_4(out)
-            #outputs = sum([self.fc_4(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            if self.n_msd is not None:
+                outputs = sum([self.fc_4(dropout(out)) for dropout in self.dropouts])/self.n_msd
+            else:
+                outputs = self.fc_4(out)
 
         return outputs
 
@@ -456,11 +446,11 @@ def valid_fn(model, dataloader, device):
     return preds
 
 
-def inference(model_name, num_classes, custom_header, model_paths, dataloader, device):
+def inference(model_name, num_classes, custom_header, dropout, model_paths, dataloader, device):
     final_preds = []
 
     for i, path in enumerate([model_paths]):
-        model = HateSpeechModel(model_name=model_name, num_classes=num_classes, custom_header=custom_header)
+        model = HateSpeechModel(model_name=model_name, num_classes=num_classes, custom_header=custom_header, dropout=dropout)
         model.to(device)
         checkpoint = torch.load(model_paths)
         model.load_state_dict(checkpoint["model_state_dict"])

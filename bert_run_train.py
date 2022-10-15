@@ -42,6 +42,7 @@ parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japa
 parser.add_argument("--model_custom_header", type=str, default="max_pooling")
 parser.add_argument("--max_length", type=int, default=76)
 parser.add_argument("--dropout", type=float, default=0.2)
+parser.add_argument("--mixout", type=bool, default=False)
 parser.add_argument("--learning_rate", type=float, default=1e-5)
 parser.add_argument("--scheduler_name", type=str, default="CosineAnnealingLR")
 parser.add_argument("--min_lr", type=float, default=1e-6)
@@ -71,6 +72,7 @@ settings["model_name"] = args.model_name
 settings["model_custom_header"] = args.model_custom_header
 settings["max_length"] = args.max_length
 settings["dropout"] = args.dropout
+settings["mixout"] = args.mixout
 # optimizer settings --
 settings["learning_rate"] = args.learning_rate
 settings["scheduler_name"] = args.scheduler_name
@@ -174,8 +176,14 @@ for fold in range(0, settings.folds):
     )
 
     # Model construct --
-    model = HateSpeechModel(model_name=settings.model_name, num_classes=settings.num_classes, custom_header=settings.model_custom_header)
-    #model = replace_mixout(model)  # mixout --
+    model = HateSpeechModel(
+        model_name=settings.model_name,
+        num_classes=settings.num_classes,
+        custom_header=settings.model_custom_header,
+        dropout=settings.dropout,
+        )
+    if settings.mixout:
+        model = replace_mixout(model)  # mixout --
     model.to(device)
 
     # Define Optimizer and Scheduler --
@@ -222,7 +230,10 @@ for fold in range(0, settings.folds):
     )
 
     valid = train_df[train_df.kfold == fold]
-    out = inference(settings.model_name, settings.num_classes, settings.model_custom_header, model_paths[fold], valid_loader, device)
+    out = inference(
+        settings.model_name, settings.num_classes,
+        settings.model_custom_header, settings.dropout,
+        model_paths[fold], valid_loader, device)
 
     for _class in range(0, settings.num_classes):
         valid[f"{model_id}_oof_class{_class}"] = out[:, _class]
