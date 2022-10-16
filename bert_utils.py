@@ -304,7 +304,6 @@ class HateSpeechModel(nn.Module):
 def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_length, num_classes, text_col="text", label_name=label_name):
     train_df = df[df.kfold != fold].reset_index(drop=True)
     valid_df = df[df.kfold == fold].reset_index(drop=True)
-
     train_dataset = HateSpeechDataset(train_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col, label_name=label_name)
     valid_dataset = HateSpeechDataset(valid_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col, label_name=label_name)
 
@@ -467,6 +466,8 @@ def run_training(
     ))
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
+    # ここでvalidのためにloadしてるの結構実装としてポンコツ
+    # 絶対それは分けるか、valid側につけたほうがイイ --
     model.load_state_dict(best_model_wts)
 
     return model, history

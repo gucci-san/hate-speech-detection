@@ -162,12 +162,12 @@ for fold in range(0, settings.folds):
         )
     if settings.mixout:
         model = replace_mixout(model)  # mixout --
-    model.to(device)
 
     # Define Optimizer and Scheduler --
     optimizer = AdamW(model.parameters(), lr=settings.learning_rate, weight_decay=settings.weight_decay)
     scheduler = fetch_scheduler(optimizer=optimizer, scheduler=settings.scheduler_name)
 
+    model.to(device)
     model, history = run_training(
         model, train_loader, valid_loader, 
         optimizer, scheduler, settings.n_accumulate, device, settings.use_amp, 
