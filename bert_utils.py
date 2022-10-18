@@ -1,6 +1,10 @@
 import os, gc, random, time, copy, math
 import warnings; warnings.simplefilter("ignore")
+import pandas as pd
 import numpy as np
+
+from pandarallel import pandarallel
+pandarallel.initialize(progress_bar=True)
 
 import re
 import demoji
@@ -11,9 +15,6 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"  # avoid juman warnings --
 
 import torch
 import torch.nn as nn
-import torch.nn.init as init
-from torch.nn import Parameter
-from torch.autograd.function import InplaceFunction
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
@@ -22,7 +23,6 @@ from torch.cuda.amp import GradScaler, autocast
 from transformers import (
     AutoModel, RobertaForMaskedLM, RoFormerModel,
     AutoTokenizer, T5Tokenizer, BertTokenizer,
-    AutoModelForMaskedLM, AutoModelForCausalLM,
 )
 
 from tqdm import tqdm
@@ -98,14 +98,56 @@ def clean_text(text: str) -> str:
     return text
 
 
+def prepare_dataframe(train_data):
+    if train_data == "raw":
+        train = pd.read_csv(data_path+"train.csv")
+        test = pd.read_csv(data_path+"test.csv")
+        df = pd.concat([train, test]).reset_index(drop=True)
+        train_shape = train.shape[0]
+    
+    elif train_data == "raw+test_pseudo":
+        train = pd.read_csv(data_path+"train.csv")
+        test_pseudo = pd.read_feather(f"{input_root}pseudo_label_base/test_pseudo_labeled.feather")
+        test_pseudo[label_name] = 1 # hard label --
+        train = pd.concat([train, test_pseudo]).reset_index(drop=True)
+        test = pd.read_csv(data_path+"test.csv")
+        df = pd.concat([train, test]).reset_index(drop=True)
+        train_shape = train.shape[0]
+
+    else:
+        Debug_print(f"NOT implemented : train_data=={train_data}")
+        assert False
+    
+    return df, train_shape
+
+
 def juman_parse(text):
     words = ""
     jumanpp = Juman()
     result = jumanpp.analysis(text)
     for mrp in result.mrph_list():
         words += (mrp.midasi + " ")
+    
     return words[:-1]  # last " " omit by [:-1] -- 
 
+
+def preprocess_text(df, train_shape, model_name):
+    df["clean_text"] = df["text"].map(lambda x: clean_text(x))
+    if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+        df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
+    train_df = df.loc[:train_shape-1, :]
+    test_df = df.loc[train_shape:, :]
+    
+    return train_df, test_df
+
+
+def make_folds(split, train_df, label_name, fold_colname="kfold"):
+    for fold, (_, val_index) in enumerate(split):
+        train_df.loc[val_index, fold_colname] = int(fold)
+    train_df[fold_colname] = train_df[fold_colname].astype(int)
+    
+    return train_df
+    
 
 def define_tokenizer(model_name: str):
     if model_name in ["rinna/japanese-roberta-base", "rinna/japanese-gpt-1b", "rinna/japanese-gpt2-medium"]:
@@ -262,7 +304,6 @@ class HateSpeechModel(nn.Module):
 def prepare_loaders(df, fold, tokenizer, trn_batch_size, val_batch_size, max_length, num_classes, text_col="text", label_name=label_name):
     train_df = df[df.kfold != fold].reset_index(drop=True)
     valid_df = df[df.kfold == fold].reset_index(drop=True)
-
     train_dataset = HateSpeechDataset(train_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col, label_name=label_name)
     valid_dataset = HateSpeechDataset(valid_df, tokenizer=tokenizer, max_length=max_length, num_classes=num_classes, text_col=text_col, label_name=label_name)
 
@@ -362,7 +403,12 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
     return epoch_loss
 
 
-def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accumulate, device, use_amp, num_epochs, fold, output_path, log=None):
+def run_training(
+    model, train_loader, valid_loader, 
+    optimizer, scheduler, n_accumulate, device, 
+    use_amp, num_epochs, fold, output_path,
+    log=None, save_checkpoint=False
+    ):
 
     if torch.cuda.is_available():
         Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
@@ -398,17 +444,17 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
             best_model_wts = copy.deepcopy(model.state_dict())
 
             # 提出ファイルを圧縮前合計25GBにしないといけないので、いらないもの保存できない --
-            torch.save({
-                "model_state_dict": model.state_dict(),
-            }, f"{output_path}model-fold{fold}.pth")
-
-            # cf.) 途中再開したい場合はmodel.state_dict()以外も必要なものアリ --
-            ## torch.save({
-            ##     "epoch": epoch,
-            ##     "model_state_dict": model.state_dict(),
-            ##     "optimizer_state_dict": optimizer.state_dict(),
-            ##     "loss": valid_epoch_loss,
-            ## }, f"{output_path}model-fold{fold}.pth")
+            if save_checkpoint:
+                torch.save({
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "loss": valid_epoch_loss,
+                }, f"{output_path}checkpoint-fold{fold}.pth")
+            else:
+                torch.save({
+                    "model_state_dict": model.state_dict(),
+                }, f"{output_path}model-fold{fold}.pth")
             
             Write_log(log, f"Model Saved"); print()
 
@@ -420,6 +466,8 @@ def run_training(model, train_loader, valid_loader, optimizer, scheduler, n_accu
     ))
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
+    # ここでvalidのためにloadしてるの結構実装としてポンコツ
+    # 絶対それは分けるか、valid側につけたほうがイイ --
     model.load_state_dict(best_model_wts)
 
     return model, history

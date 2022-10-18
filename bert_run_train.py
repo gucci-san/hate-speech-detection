@@ -1,6 +1,4 @@
 import pandas as pd
-import torch
-import torch.cuda.amp as amp
 import os
 
 from pandarallel import pandarallel
@@ -9,7 +7,7 @@ pandarallel.initialize(progress_bar=True)
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 
-from transformers import AutoTokenizer, T5Tokenizer, BertTokenizer, AdamW
+from transformers import AdamW
 
 from colorama import Fore; r_=Fore.RED; sr_=Fore.RESET
 from glob import glob
@@ -96,8 +94,11 @@ else:
 
 
 # 計算時点でのpyファイル, settingsを保存 --
-os.system(f"cp ./*py {settings.output_path}")
-os.system(f"cp ./*sh {settings.output_path}")
+if not os.path.exists(f"{settings.output_path}src/"):
+    os.mkdir(f"{settings.output_path}src/")
+
+os.system(f"cp ./*py {settings.output_path}src/")
+os.system(f"cp ./*sh {settings.output_path}src/")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 
@@ -109,38 +110,15 @@ settings.to_json(f"{settings.output_path}settings.json", indent=4)
 #                                        #
 # ====================================== #
 # load data --
-# ## -> df = pd.concat([train, ..., test]);
-# ## -> train_shape = train.shape[0]
-if settings.train_data == "raw":
-    train = pd.read_csv(data_path+"train.csv")
-    test = pd.read_csv(data_path+"test.csv")
-    df = pd.concat([train, test]).reset_index(drop=True)
-    train_shape = train.shape[0]
-    del train, test; _ = gc.collect()
-
-elif settings.train_data == "raw+test_pseudo":
-    train = pd.read_csv(data_path+"train.csv")
-    test_pseudo = pd.read_feather(f"{input_root}pseudo_label_base/test_pseudo_labeled.feather")
-    test_pseudo[label_name] = 1 # hard label --
-    train = pd.concat([train, test_pseudo]).reset_index(drop=True)
-    test = pd.read_csv(data_path+"test.csv")
-    df = pd.concat([train, test]).reset_index(drop=True)
-    train_shape = train.shape[0]
-    del train, test_pseudo, test; _ = gc.collect()
+df, train_shape = prepare_dataframe(train_data=settings.train_data)
 
 # preprocess --
-df["clean_text"] = df["text"].map(lambda x: clean_text(x))
-if settings.model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-    df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
-train_df = df.loc[:train_shape-1, :]
-test_df = df.loc[train_shape:, :]
+train_df, test_df = preprocess_text(df, train_shape, settings.model_name)
 
 # make folds --
 skf = StratifiedKFold(n_splits=settings.folds, shuffle=True, random_state=SEED)
 split = skf.split(train_df, train_df[label_name])
-for fold, (_, val_index) in enumerate(skf.split(X=train_df, y=train_df[label_name])):
-    train_df.loc[val_index, "kfold"] = int(fold)
-train_df["kfold"] = train_df["kfold"].astype(int)
+train_df = make_folds(split, train_df, label_name=label_name)
 
 # define tokenizer --
 tokenizer = define_tokenizer(settings.model_name)
@@ -184,16 +162,17 @@ for fold in range(0, settings.folds):
         )
     if settings.mixout:
         model = replace_mixout(model)  # mixout --
-    model.to(device)
 
     # Define Optimizer and Scheduler --
     optimizer = AdamW(model.parameters(), lr=settings.learning_rate, weight_decay=settings.weight_decay)
     scheduler = fetch_scheduler(optimizer=optimizer, scheduler=settings.scheduler_name)
 
+    model.to(device)
     model, history = run_training(
         model, train_loader, valid_loader, 
         optimizer, scheduler, settings.n_accumulate, device, settings.use_amp, 
-        settings.epochs, fold, settings.output_path, log
+        settings.epochs, fold, settings.output_path,
+        log, save_checkpoint=True
     )
 
     del model, history, train_loader, valid_loader

@@ -1,14 +1,21 @@
 ## NISHIKA, hate-speech-detection
 
-### やりたいこと
+### To Do
 <スクリプト化>
 * CVとLBが完全一致という感じもしないのでAdversarialしてみてもいいかも
-* pseudo-labelling + corpusから追加データセット作成
-    * pseudoがsoftだとstratified-kfoldのとこ実装変えないと通せない --
+    * 意味なかったから多分データ少ないです
 
-### To Do
+* pseudo-labelling + corpusから追加データセット作成
+    * pseudoがsoftだとstratified-kfoldのとこ実装変えないと通せないから注意
+
 * mdebertaは使ってみたほうがいい
+    * 確かにシングルだと高めに見えます(baseサイズ比)
+
 * lr上げると全部0になるので、思ってるより過学習気味かも
+
+* 外部データ学習
+    * Validateどうするの？
+        * train_df全部を対象としてHold-Outでいい？
 
 ### 学び
 * dask, pandarallelは使い得

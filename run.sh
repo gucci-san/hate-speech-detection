@@ -51,7 +51,9 @@
 
 
 # trial --
-python bert_run_train.py --run_id "tmp" --folds 2 --trial True --model_custom_header "max_pooling"
+#python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
+#python bert_run_test.py --run_id "tmp_epochs1"
+python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
 python bert_run_test.py --run_id "tmp"
 
 ## # prediction -
