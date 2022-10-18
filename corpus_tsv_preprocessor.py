@@ -28,7 +28,7 @@ def tsv_text_cleaner(text: str) -> str:
     return t.split("\t")
 
 tsv_line_list = []
-with open(data_path+f"corpus/{args.source}.tsv", encoding="utf-8") as f:
+with open(input_root+f"corpus/{args.source}.tsv", encoding="utf-8") as f:
     for l in f:
         tsv_line_list += tsv_text_cleaner(l)
 df = pd.DataFrame({

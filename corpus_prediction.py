@@ -1,3 +1,7 @@
+import hashlib
+import os
+import datetime
+
 import pandas as pd
 import torch.nn as nn
 
@@ -19,9 +23,9 @@ parser.add_argument("--df_end_index", type=int, default=1024)
 args, unknown = parser.parse_known_args()
 save_path = f"{input_root}corpus_label_{args.run_id}"
 
-# コーパス作成時のセッティングを保存 --
-if not os.path.exists(f"{save_path}"):
-    os.mkdir(f"{save_path}")
+# # コーパス作成時のセッティングを保存 --
+# if not os.path.exists(f"{save_path}"):
+#     os.mkdir(f"{save_path}")
 
 corpus_settings = pd.Series()
 corpus_settings["used_model"] = args.run_id
@@ -76,5 +80,19 @@ df[f"{model_id}_pred"] = np.argmax(final_preds, axis=1)
 for _class in range(0, settings.num_classes):
     df.loc[:, f"{model_id}_oof_class_{_class}"] = final_preds[:, _class]
 
-df.to_feather(f"{save_path}/corpus_labeled_{args.df_start_index}_to_{args.df_end_index}.feather")
 
+# コーパスのラベル付けの結果を集計していく --
+log_df = pd.DataFrame(corpus_settings).T
+log_df["pred_0"] = df["model_pred"].value_counts()[0]
+log_df["pred_1"] = df.shape[0] - df["model_pred"].value_counts()[0]
+
+text = datetime.datetime.now().strftime(format="%Y%m%d-%H%m%S")
+hash = hashlib.md5(text.encode("utf-8")).hexdigest()
+log_df["hash"] = hash
+
+if not os.path.exists(f"{save_path}/corpus_info.csv"):
+    log_df.to_csv(f"{save_path}/corpus_info.csv", index=False)
+else:
+    log_df.to_csv(f"{save_path}/corpus_info.csv", index=False, mode="a", header=None)
+
+df.reset_index(drop=True).to_feather(f"{save_path}/corpus_labeled_{hash}.feather")
