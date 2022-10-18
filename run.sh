@@ -10,6 +10,11 @@
 #python bert_run_train.py --run_id "roberta_large_fold4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --folds 4
 #python bert_run_train.py --run_id "mdeberta_base" --model_custom_header "concatenate-4" --model_name "microsoft/mdeberta-v3-base" --epochs 10
 #python bert_run_train.py --run_id "gpt2_base" --model_custom_header "concatenate-4" --model_name "rinna/japanese-gpt2-medium" --epochs 10
+#python bert_run_train.py --run_id "xlm_roberta_large" --model_custom_header "concatenate-4" --model_name "xlm-roberta-large" --epochs 10
+
+# 本命 --
+#python bert_run_train.py --run_id "roberta_large_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_corpus_check" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug"
 
 # さすがにパラメータ多すぎてメモリ足りない --
 #python bert_run_train.py --run_id "tmp" --model_name "rinna/japanese-gpt-1b" --folds 2 --trial True --train_batch_size 2 --n_accumulate 16
@@ -53,8 +58,8 @@
 # trial --
 #python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
 #python bert_run_test.py --run_id "tmp_epochs1"
-python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
-python bert_run_test.py --run_id "tmp"
+#python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
+#python bert_run_test.py --run_id "tmp"
 
 ## # prediction -
 #python bert_run_test.py --run_id "bert_baseline"
@@ -83,3 +88,8 @@ python bert_run_test.py --run_id "tmp"
 #python bert_run_test.py --run_id "roberta_large_msd_cat4"
 
 #python bert_run_test.py --run_id "roberta_large_mixout_cat4"
+
+#python bert_run_test.py --run_id "xlm_roberta_large"
+#python bert_run_test.py --run_id "roberta_large_cat4"
+
+python bert_run_test.py --run_id "roberta_large_cat4_corpus_check"

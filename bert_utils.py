@@ -102,22 +102,24 @@ def prepare_dataframe(train_data):
     if train_data == "raw":
         train = pd.read_csv(data_path+"train.csv")
         test = pd.read_csv(data_path+"test.csv")
-        df = pd.concat([train, test]).reset_index(drop=True)
-        train_shape = train.shape[0]
-    
     elif train_data == "raw+test_pseudo":
         train = pd.read_csv(data_path+"train.csv")
         test_pseudo = pd.read_feather(f"{input_root}pseudo_label_base/test_pseudo_labeled.feather")
         test_pseudo[label_name] = 1 # hard label --
         train = pd.concat([train, test_pseudo]).reset_index(drop=True)
         test = pd.read_csv(data_path+"test.csv")
-        df = pd.concat([train, test]).reset_index(drop=True)
-        train_shape = train.shape[0]
-
+    elif train_data == "raw+corpus_label_debug":
+        train = pd.read_csv(data_path+"train.csv")
+        corpus_labeled = pd.read_feather("input/corpus_label_roberta_large_cat4/corpus_labeled.feather").rename(columns={"clean_text":"text", "model_pred":label_name})
+        corpus_labeled = corpus_labeled.drop(["model_oof_class_0", "model_oof_class_1"], axis=1)
+        train = pd.concat([train, corpus_labeled])
+        test = pd.read_csv(data_path+"test.csv")
     else:
         Debug_print(f"NOT implemented : train_data=={train_data}")
         assert False
     
+    df = pd.concat([train, test]).reset_index(drop=True)
+    train_shape = train.shape[0]
     return df, train_shape
 
 
@@ -159,7 +161,7 @@ def define_tokenizer(model_name: str):
         tokenizer = BertTokenizer.from_pretrained(
             model_name
         )
-    elif model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+    elif model_name in ["nlp-waseda/roberta-large-japanese-seq512", "xlm-roberta-large"]:
         tokenizer = AutoTokenizer.from_pretrained(
             model_name
         )
@@ -235,7 +237,7 @@ class HateSpeechModel(nn.Module):
         elif model_name in ["rinna/japanese-gpt-1b"]:
             self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 2048
-        elif model_name in ["rinna/japanese-gpt2-medium"]:
+        elif model_name in ["rinna/japanese-gpt2-medium", "xlm-roberta-large"]:
             self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 1024
         else:
