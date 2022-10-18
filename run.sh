@@ -14,6 +14,7 @@
 
 # 本命 --
 #python bert_run_train.py --run_id "roberta_large_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_corpus_check" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug"
 
 # さすがにパラメータ多すぎてメモリ足りない --
 #python bert_run_train.py --run_id "tmp" --model_name "rinna/japanese-gpt-1b" --folds 2 --trial True --train_batch_size 2 --n_accumulate 16
@@ -89,5 +90,6 @@
 #python bert_run_test.py --run_id "roberta_large_mixout_cat4"
 
 #python bert_run_test.py --run_id "xlm_roberta_large"
+#python bert_run_test.py --run_id "roberta_large_cat4"
 
-python bert_run_test.py --run_id "roberta_large_cat4"
+python bert_run_test.py --run_id "roberta_large_cat4_corpus_check"
