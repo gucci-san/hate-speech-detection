@@ -159,7 +159,7 @@ def define_tokenizer(model_name: str):
         tokenizer = BertTokenizer.from_pretrained(
             model_name
         )
-    elif model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+    elif model_name in ["nlp-waseda/roberta-large-japanese-seq512", "xlm-roberta-large"]:
         tokenizer = AutoTokenizer.from_pretrained(
             model_name
         )
@@ -235,7 +235,7 @@ class HateSpeechModel(nn.Module):
         elif model_name in ["rinna/japanese-gpt-1b"]:
             self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 2048
-        elif model_name in ["rinna/japanese-gpt2-medium"]:
+        elif model_name in ["rinna/japanese-gpt2-medium", "xlm-roberta-large"]:
             self.model = AutoModel.from_pretrained(model_name, output_attentions=True, output_hidden_states=True)
             self.hidden_size = 1024
         else:

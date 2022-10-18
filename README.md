@@ -27,3 +27,4 @@
 
 ### 確認したい事項
 * 結局BERTの中身わかってないからなあ......
+* AutoModelとAutoModelForMaskedLMの違い
