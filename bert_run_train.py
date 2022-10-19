@@ -172,7 +172,7 @@ for fold in range(0, settings.folds):
         model, train_loader, valid_loader, 
         optimizer, scheduler, settings.n_accumulate, device, settings.use_amp, 
         settings.epochs, fold, settings.output_path,
-        log, save_checkpoint=True
+        log, save_checkpoint=False
     )
 
     del model, history, train_loader, valid_loader
