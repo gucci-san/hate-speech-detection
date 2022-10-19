@@ -15,7 +15,7 @@
 # 本命 --
 #python bert_run_train.py --run_id "roberta_large_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_corpus_check" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug"
-python bert_run_train.py --run_id "roberta_large_cat4_corpus_check2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug" --learning_rate 5e-6 --min_lr 1e-7
+#python bert_run_train.py --run_id "roberta_large_cat4_corpus_check2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug" --learning_rate 5e-6 --min_lr 1e-7
 
 # さすがにパラメータ多すぎてメモリ足りない --
 #python bert_run_train.py --run_id "tmp" --model_name "rinna/japanese-gpt-1b" --folds 2 --trial True --train_batch_size 2 --n_accumulate 16
@@ -39,6 +39,13 @@ python bert_run_train.py --run_id "roberta_large_cat4_corpus_check2" --model_nam
 ## ## train_batch_size
 #python bert_run_train.py --run_id "roberta_large_cat4_batch16" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 16 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_batch64" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 64 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_batch128" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 128 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_batch256" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 128 --n_accumulate 2 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_batch512" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 128 --n_accumulate 4 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_batch8" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 8 --model_custom_header "concatenate-4" --epochs 10
+
+# メモリエラー
+#python bert_run_train.py --run_id "roberta_large_cat4_batch512" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 512 --model_custom_header "concatenate-4" --epochs 10
 
 ## custom_header compare --
 #python bert_run_train.py --run_id "bert_conv" --model_custom_header "conv" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
@@ -93,4 +100,9 @@ python bert_run_train.py --run_id "roberta_large_cat4_corpus_check2" --model_nam
 #python bert_run_test.py --run_id "xlm_roberta_large"
 #python bert_run_test.py --run_id "roberta_large_cat4"
 
-python bert_run_test.py --run_id "roberta_large_cat4_corpus_check"
+#python bert_run_test.py --run_id "roberta_large_cat4_corpus_check"
+#python bert_run_test.py --run_id "roberta_large_cat4_corpus_check2"
+#python bert_run_test.py --run_id "roberta_large_cat4_batch128"
+#python bert_run_test.py --run_id "roberta_large_cat4_batch256"
+#python bert_run_test.py --run_id "roberta_large_cat4_batch512"
+#python bert_run_test.py --run_id "roberta_large_cat4_batch8"
