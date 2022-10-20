@@ -118,3 +118,4 @@
 #python bert_run_test.py --run_id "roberta_large_cat4_fold12"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold16"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold20"
+#python bert_run_test.py --run_id "roberta_large_cat4_fold25"
