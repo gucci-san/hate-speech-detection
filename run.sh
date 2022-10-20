@@ -5,10 +5,10 @@
 #python bert_run_train.py --run_id "roberta_baseline" --model_name "rinna/japanese-roberta-base" --epochs 10 --trial True
 #python bert_run_train.py --run_id "electra_baseline" --model_name "izumi-lab/electra-base-japanese-discriminator" --epochs 10 --trial True
 #python bert_run_train.py --run_id "roformer_baseline" --model_name "ganchengguang/Roformer-base-japanese" --epochs 10
-#python bert_run_train.py --run_id "bert_large" --model_name "cl-tohoku/bert-large-japanese" --epochs 10
+#python bert_run_train.py --run_id "bert_large_cat4" --model_custom_header "concatenate-4" --model_name "cl-tohoku/bert-large-japanese" --epochs 10
 #python bert_run_train.py --run_id "roberta_large" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_fold4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --folds 4
-#python bert_run_train.py --run_id "mdeberta_base" --model_custom_header "concatenate-4" --model_name "microsoft/mdeberta-v3-base" --epochs 10
+python bert_run_train.py --run_id "mdeberta_base" --use_amp False --trial True --model_name "microsoft/mdeberta-v3-base" --epochs 10
 #python bert_run_train.py --run_id "gpt2_base" --model_custom_header "concatenate-4" --model_name "rinna/japanese-gpt2-medium" --epochs 10
 #python bert_run_train.py --run_id "xlm_roberta_large" --model_custom_header "concatenate-4" --model_name "xlm-roberta-large" --epochs 10
 
@@ -16,9 +16,6 @@
 #python bert_run_train.py --run_id "roberta_large_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_corpus_check" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug"
 #python bert_run_train.py --run_id "roberta_large_cat4_corpus_check2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10 --train_data "raw+corpus_label_debug" --learning_rate 5e-6 --min_lr 1e-7
-
-# [CLS]+[SEP] --
-python bert_run_train.py --run_id "roberta_large_cat4_add_tokens" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 
 # さすがにパラメータ多すぎてメモリ足りない --
 #python bert_run_train.py --run_id "tmp" --model_name "rinna/japanese-gpt-1b" --folds 2 --trial True --train_batch_size 2 --n_accumulate 16
@@ -84,12 +81,12 @@ python bert_run_train.py --run_id "roberta_large_cat4_add_tokens" --model_name "
 #python bert_run_test.py --run_id "bert_conv"
 #python bert_run_test.py --run_id "bert_lstm"
 #python bert_run_test.py --run_id "bert_cat4"
-#python bert_run_test.py --run_id "bert_large"
+python bert_run_test.py --run_id "bert_large_cat4"
 #python bert_run_test.py --run_id "roberta_large"
 #python bert_run_test.py --run_id "roberta_large_maxpool"
 #python bert_run_test.py --run_id "roberta_large_lstm"
 #python bert_run_test.py --run_id "roberta_large_conv
-#python bert_run_test.py --run_id "mdeberta_base"
+python bert_run_test.py --run_id "mdeberta_base_cat4"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold3"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold7"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold10"
