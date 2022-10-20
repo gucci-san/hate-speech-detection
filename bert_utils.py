@@ -111,6 +111,7 @@ def prepare_dataframe(train_data):
     elif train_data == "raw+corpus_label_debug":
         train = pd.read_csv(data_path+"train.csv")
         corpus_labeled = pd.read_feather("input/corpus_label_roberta_large_cat4/corpus_labeled.feather").rename(columns={"clean_text":"text", "model_pred":label_name})
+        corpus_labeled = corpus_labeled[corpus_labeled["model_oof_class_1"] > 0.7]
         corpus_labeled = corpus_labeled.drop(["model_oof_class_0", "model_oof_class_1"], axis=1)
         train = pd.concat([train, corpus_labeled])
         test = pd.read_csv(data_path+"test.csv")
