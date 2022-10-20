@@ -96,7 +96,6 @@ else:
 # 計算時点でのpyファイル, settingsを保存 --
 if not os.path.exists(f"{settings.output_path}src/"):
     os.mkdir(f"{settings.output_path}src/")
-
 os.system(f"cp ./*py {settings.output_path}src/")
 os.system(f"cp ./*sh {settings.output_path}src/")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
@@ -193,7 +192,6 @@ fold_acc = []
 for fold in range(0, settings.folds):
     print(f"{y_} ====== Fold: {fold} ======{sr_}")
 
-    #model_id = model_paths[fold].split("/")[3].split(".")[0].split("-")[0]
     model_id = "model"
 
     # Create DataLoader --

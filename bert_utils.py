@@ -330,6 +330,7 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
 
     else:
         print(f"*** *** NOT implemented *** *** ")
+        print(f"        --> CosineAnnealingLR *** *** ")
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max, eta_min=eta_min)
     return scheduler
 
@@ -409,17 +410,18 @@ def run_training(
     model, train_loader, valid_loader, 
     optimizer, scheduler, n_accumulate, device, 
     use_amp, num_epochs, fold, output_path,
-    log=None, save_checkpoint=False
+    log=None, save_checkpoint=False, load_checkpoint=None
     ):
 
     if torch.cuda.is_available():
         Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
 
+    # ------------------------------------------------------------
     start_time = time.time()
+
     best_model_wts = copy.deepcopy(model.state_dict())
     best_epoch_loss = np.inf
     history = defaultdict(list)
-
     for epoch in range(1, num_epochs+1):
         gc.collect()
 
@@ -452,6 +454,7 @@ def run_training(
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
                     "loss": valid_epoch_loss,
+                    "best_epoch_loss": best_epoch_loss,
                 }, f"{output_path}checkpoint-fold{fold}.pth")
             else:
                 torch.save({
@@ -460,16 +463,15 @@ def run_training(
             
             Write_log(log, f"Model Saved"); print()
 
-
     end_time = time.time()
+    # --------------------------------------------------------------
+    
     time_elapsed = end_time - start_time
     Write_log(log, "Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
         time_elapsed//3600, (time_elapsed%3600)//60, (time_elapsed%3600)%60
     ))
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
-    # ここでvalidのためにloadしてるの結構実装としてポンコツ
-    # 絶対それは分けるか、valid側につけたほうがイイ --
     model.load_state_dict(best_model_wts)
 
     return model, history
