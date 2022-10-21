@@ -1,4 +1,5 @@
 import os, gc, random, time, copy, math
+from tracemalloc import start
 import warnings; warnings.simplefilter("ignore")
 import pandas as pd
 import numpy as np
@@ -419,10 +420,19 @@ def run_training(
     # ------------------------------------------------------------
     start_time = time.time()
 
+    if load_checkpoint is not None:
+        checkpoint = torch.load(load_checkpoint)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+        start_epoch, loss, best_epoch_loss = checkpoint["epoch"], checkpoint["loss"], checkpoint["best_epoch_loss"]
+        start_epoch += 1  # 保存されてたepoch==1なら、次は2から始まるはずなので --
+    else:
+        start_epoch, loss, best_epoch_loss = 1, None, np.inf
+
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_epoch_loss = np.inf
     history = defaultdict(list)
-    for epoch in range(1, num_epochs+1):
+    for epoch in range(start_epoch, num_epochs+start_epoch):
         gc.collect()
 
         train_epoch_loss = train_one_epoch(
@@ -453,6 +463,7 @@ def run_training(
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
+                    "scheduler_state_dict": scheduler.state_dict(),
                     "loss": valid_epoch_loss,
                     "best_epoch_loss": best_epoch_loss,
                 }, f"{output_path}checkpoint-fold{fold}.pth")
