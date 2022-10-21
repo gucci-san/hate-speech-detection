@@ -1,4 +1,5 @@
 import os, gc, random, time, copy, math
+from tracemalloc import start
 import warnings; warnings.simplefilter("ignore")
 import pandas as pd
 import numpy as np
@@ -330,6 +331,7 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
 
     else:
         print(f"*** *** NOT implemented *** *** ")
+        print(f"        --> CosineAnnealingLR *** *** ")
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max, eta_min=eta_min)
     return scheduler
 
@@ -409,18 +411,28 @@ def run_training(
     model, train_loader, valid_loader, 
     optimizer, scheduler, n_accumulate, device, 
     use_amp, num_epochs, fold, output_path,
-    log=None, save_checkpoint=False
+    log=None, save_checkpoint=False, load_checkpoint=None
     ):
 
     if torch.cuda.is_available():
         Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
 
+    # ------------------------------------------------------------
     start_time = time.time()
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_epoch_loss = np.inf
-    history = defaultdict(list)
 
-    for epoch in range(1, num_epochs+1):
+    if load_checkpoint is not None:
+        checkpoint = torch.load(load_checkpoint)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+        start_epoch, loss, best_epoch_loss = checkpoint["epoch"], checkpoint["loss"], checkpoint["best_epoch_loss"]
+        start_epoch += 1  # 保存されてたepoch==1なら、次は2から始まるはずなので --
+    else:
+        start_epoch, loss, best_epoch_loss = 1, None, np.inf
+
+    best_model_wts = copy.deepcopy(model.state_dict())
+    history = defaultdict(list)
+    for epoch in range(start_epoch, num_epochs+start_epoch):
         gc.collect()
 
         train_epoch_loss = train_one_epoch(
@@ -451,7 +463,9 @@ def run_training(
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
+                    "scheduler_state_dict": scheduler.state_dict(),
                     "loss": valid_epoch_loss,
+                    "best_epoch_loss": best_epoch_loss,
                 }, f"{output_path}checkpoint-fold{fold}.pth")
             else:
                 torch.save({
@@ -460,16 +474,15 @@ def run_training(
             
             Write_log(log, f"Model Saved"); print()
 
-
     end_time = time.time()
+    # --------------------------------------------------------------
+    
     time_elapsed = end_time - start_time
     Write_log(log, "Training Complete in {:.0f}h {:.0f}m {:.0f}s".format(
         time_elapsed//3600, (time_elapsed%3600)//60, (time_elapsed%3600)%60
     ))
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
-    # ここでvalidのためにloadしてるの結構実装としてポンコツ
-    # 絶対それは分けるか、valid側につけたほうがイイ --
     model.load_state_dict(best_model_wts)
 
     return model, history

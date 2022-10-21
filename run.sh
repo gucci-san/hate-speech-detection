@@ -71,6 +71,7 @@
 
 # trial --
 #python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
+#python bert_run_train.py --run_id "tmp_before_refactor" --folds 3 --model_custom_header "max_pooling" --epochs 5
 #python bert_run_test.py --run_id "tmp_epochs1"
 #python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
 #python bert_run_test.py --run_id "tmp"
