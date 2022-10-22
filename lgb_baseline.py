@@ -70,13 +70,6 @@ def wakatier(text, tagger=MeCab.Tagger(f"-Owakati -d {dic_neologd}")):
     return wakati_clear(tagger.parse(text))
 
 
-df, train_shape = prepare_dataframe(train_data="raw")
-df["clean_text"] = df["text"].map(lambda x: clean_text(x))
-text_list = df["clean_text"].values
-for i in range(len(text_list)):
-    text_list[i] = wakatier(text_list[i])
-
-
 def calc_tfidf(text_list: list) -> pd.DataFrame:
     
     bow = CountVectorizer()
@@ -88,26 +81,6 @@ def calc_tfidf(text_list: list) -> pd.DataFrame:
     df_tfidf = pd.DataFrame(tfidf.fit_transform(array_bow).toarray(), columns=bow.get_feature_names_out())
     df_bow = pd.DataFrame(array_bow, columns=bow.get_feature_names_out())
     return df_tfidf, df_bow
-
-# tfidf -> SVD --
-df_tfidf, df_bow = calc_tfidf(text_list)
-df_tfidf_sparse = csr_matrix(df_tfidf)
-svd = TruncatedSVD(n_components=svd_components, n_iter=30, random_state=SEED)
-df_tfidf_svd = pd.DataFrame(svd.fit_transform(df_tfidf_sparse), columns=[f"svd_{str(i)}" for i in range(svd_components)])
-
-
-# sentence-bert -> PCA -- 
-model = SentenceTransformer("stsb-xlm-r-multilingual", device="cuda:0")
-df_embeddings = model.encode(df["clean_text"].values.tolist(), convert_to_numpy=True)
-pca = IncrementalPCA(n_components=pca_components)
-df_bert_emb_pca = pd.DataFrame(pca.fit_transform(df_embeddings), columns=[f"pca_{str(i)}" for i in range(pca_components)])
-
-
-# features --
-feature_df = pd.concat([df_tfidf_svd, df_bert_emb_pca], axis=1)
-lgb_config["feature_name"] = feature_df.columns.tolist()
-df = pd.concat([df, feature_df], axis=1)
-
 
 
 def Lgb_Metric(outputs, targets):
@@ -220,7 +193,6 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
         oof.to_csv(output_path + '/oof.csv',index=False)
 
         log.close()
-        #os.rename(output_path + '/train.log', output_path + '/train_%.6f.log'%mean_valid_metric)
 
         log_df = pd.DataFrame({
             'run_id':[run_id],
@@ -255,4 +227,42 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
     
     return oof, sub, (mean_valid_metric, global_valid_metric)
 
+
+
+
+df, train_shape = prepare_dataframe(train_data="raw")
+df["clean_text"] = df["text"].map(lambda x: clean_text(x))
+text_list = df["clean_text"].values
+for i in range(len(text_list)):
+    text_list[i] = wakatier(text_list[i])
+
+
+# tfidf -> SVD --
+df_tfidf, df_bow = calc_tfidf(text_list)
+df_tfidf_sparse = csr_matrix(df_tfidf)
+svd = TruncatedSVD(n_components=svd_components, n_iter=30, random_state=SEED)
+df_tfidf_svd = pd.DataFrame(svd.fit_transform(df_tfidf_sparse), columns=[f"svd_{str(i)}" for i in range(svd_components)])
+
+
+# sentence-bert -> PCA -- 
+model = SentenceTransformer("stsb-xlm-r-multilingual", device="cuda:0")
+df_embeddings = model.encode(df["clean_text"].values.tolist(), convert_to_numpy=True)
+pca = IncrementalPCA(n_components=pca_components)
+df_bert_emb_pca = pd.DataFrame(pca.fit_transform(df_embeddings), columns=[f"pca_{str(i)}" for i in range(pca_components)])
+
+
+# features --
+feature_df = pd.concat([df_tfidf_svd, df_bert_emb_pca], axis=1)
+lgb_config["feature_name"] = feature_df.columns.tolist()
+df = pd.concat([df, feature_df], axis=1)
+
+
+
+
+
+# ====================================== #
+#                                        #
+#       -- Train-Valid & Predict --      #
+#                                        #
+# ====================================== #
 _, _, _ = Lgb_train_and_predict(df.iloc[:train_shape-1, :], df.iloc[train_shape:, :], lgb_config, run_id="tmp", trial=True)
