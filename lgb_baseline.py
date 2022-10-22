@@ -32,13 +32,13 @@ settings = OrderedDict({
     "lgb_params": OrderedDict({
         "objective": "binary",
         "metric": "binary_logloss",
-        "boosting": "gbdt",
+        "boosting": "dart",
         "max_depth": -1,
-        "num_leaves": 32,
+        "num_leaves":40,
         "learning_rate": 0.05,
-        "bagging_freq": 5,
-        "bagging_fraction": 0.75,
-        "feature_fraction": 0.05,
+        #"bagging_freq": 5,
+        #"bagging_fraction": 0.85,
+        #"feature_fraction": 0.05,
         "min_data_in_leaf": 20,    # default: 20 -- 
         "max_bin": 255,            # default: 255 --
         "min_data_in_bin": 3,      # default: 3 --
@@ -50,7 +50,7 @@ settings = OrderedDict({
         "verbosity": 1,
         "seed": SEED,
         }),
-    "svd_components": 6144,
+    "svd_components": 2048,
     "pca_components": 512,
     "rounds": 5000,
     "early_stopping_rounds": 100,
@@ -281,4 +281,4 @@ df = pd.concat([df, feature_df], axis=1)
 #       -- Train-Valid & Predict --      #
 #                                        #
 # ====================================== #
-_, _, _ = Lgb_train_and_predict(df.iloc[:train_shape-1, :], df.iloc[train_shape:, :], settings, run_id="tmp", trial=True)
+_, _, _ = Lgb_train_and_predict(df.iloc[:train_shape-1, :], df.iloc[train_shape:, :], settings, run_id="lgb_tmp2", trial=True)
