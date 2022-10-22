@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-import os, datetime
+import os, datetime, json
+from collections import OrderedDict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import log_loss
 from colorama import Fore
@@ -27,16 +28,14 @@ from config import *
 #    -- Define Settings and Constants -- #
 #                                        #
 # ====================================== #
-svd_components = 256
-pca_components = 256
-lgb_config = {
-    "lgb_params": {
+settings = OrderedDict({
+    "lgb_params": OrderedDict({
         "objective": "binary",
         "metric": "binary_logloss",
         "boosting": "gbdt",
         "max_depth": -1,
         "num_leaves": 32,
-        "learning_rate": 0.035,
+        "learning_rate": 0.05,
         "bagging_freq": 5,
         "bagging_fraction": 0.75,
         "feature_fraction": 0.05,
@@ -48,15 +47,19 @@ lgb_config = {
         "lambda_l1": 0.1,
         "lambda_l2": 30,
         "num_threads": 16,
-        "verbosity": 1
-    },
-    "feature_name": [],
-    "rounds": 4000,
+        "verbosity": 1,
+        "seed": SEED,
+        }),
+    "svd_components": 6144,
+    "pca_components": 512,
+    "rounds": 5000,
     "early_stopping_rounds": 100,
     "verbose_eval": 50,
     "folds": 5,
     "seed": SEED,
-}
+    "feature_name": [],
+})
+
 
 
 def wakati_clear(text):
@@ -111,11 +114,17 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
     print(f"{y_} Lgb_train_and_predict : {run_id}{sr_}")    
 
     # keep current source to output_path -- 
-    os.system(f'cp ./*lgb*.py {output_path}')
-    os.system(f'cp ./*lgb*.sh {output_path}')
-    config['lgb_params']['seed'] = config['seed']
+    if not os.path.exists(f"{output_path}/src"):
+        os.mkdir(f"{output_path}/src")
+    os.system(f'cp ./*lgb*.py {output_path}/src')
+    os.system(f'cp ./*lgb*.sh {output_path}/src')
     
-    # ----- train ------------------------------------------------------------------------------
+
+    # ====================================== #
+    #                                        #
+    #    --           Train               -- #
+    #                                        #
+    # ====================================== #
     oof, sub = None,None
     if train is not None:
         print(f"{g_}     ... start train{sr_}")
@@ -131,7 +140,7 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
         verbose = config['verbose_eval']
         early_stopping_rounds = config['early_stopping_rounds']
         folds = config['folds']
-        seed = config['seed']
+        seed = SEED
 
         # initialize train oof & metrics --
         oof = train[[id_name]]
@@ -194,6 +203,7 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
 
         log.close()
 
+        # save log --
         log_df = pd.DataFrame({
             'run_id':[run_id],
             'mean metric':[round(mean_valid_metric,6)],
@@ -203,8 +213,17 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
             log_df.to_csv("./experiment/lgb_experiment_log.csv" ,index=False)
         else:
             log_df.to_csv("./experiment/lgb_experiment_log.csv" ,index=False ,header=None ,mode='a')
+        
+        # save settings --
+        with open(f"{output_path}/settings.json", "w") as f:
+            json.dump(config, f, indent=4)
 
-    # ----- test ------------------------------------------------------------------------------------------
+
+    # ====================================== #
+    #                                        #
+    #    --           Test                -- #
+    #                                        #
+    # ====================================== #
     if test is not None:
         if train is None:
             folds = config['folds']
@@ -229,7 +248,7 @@ def Lgb_train_and_predict(train, test, config, test_batch_id=None, aug=None, out
 
 
 
-
+# prepare data --
 df, train_shape = prepare_dataframe(train_data="raw")
 df["clean_text"] = df["text"].map(lambda x: clean_text(x))
 text_list = df["clean_text"].values
@@ -240,24 +259,21 @@ for i in range(len(text_list)):
 # tfidf -> SVD --
 df_tfidf, df_bow = calc_tfidf(text_list)
 df_tfidf_sparse = csr_matrix(df_tfidf)
-svd = TruncatedSVD(n_components=svd_components, n_iter=30, random_state=SEED)
-df_tfidf_svd = pd.DataFrame(svd.fit_transform(df_tfidf_sparse), columns=[f"svd_{str(i)}" for i in range(svd_components)])
+svd = TruncatedSVD(n_components=settings["svd_components"], n_iter=30, random_state=SEED)
+df_tfidf_svd = pd.DataFrame(svd.fit_transform(df_tfidf_sparse), columns=[f"svd_{str(i)}" for i in range(settings["svd_components"])])
 
 
 # sentence-bert -> PCA -- 
 model = SentenceTransformer("stsb-xlm-r-multilingual", device="cuda:0")
 df_embeddings = model.encode(df["clean_text"].values.tolist(), convert_to_numpy=True)
-pca = IncrementalPCA(n_components=pca_components)
-df_bert_emb_pca = pd.DataFrame(pca.fit_transform(df_embeddings), columns=[f"pca_{str(i)}" for i in range(pca_components)])
+pca = IncrementalPCA(n_components=settings["pca_components"])
+df_bert_emb_pca = pd.DataFrame(pca.fit_transform(df_embeddings), columns=[f"pca_{str(i)}" for i in range(settings["pca_components"])])
 
 
 # features --
 feature_df = pd.concat([df_tfidf_svd, df_bert_emb_pca], axis=1)
-lgb_config["feature_name"] = feature_df.columns.tolist()
+settings["feature_name"] = feature_df.columns.tolist()
 df = pd.concat([df, feature_df], axis=1)
-
-
-
 
 
 # ====================================== #
@@ -265,4 +281,4 @@ df = pd.concat([df, feature_df], axis=1)
 #       -- Train-Valid & Predict --      #
 #                                        #
 # ====================================== #
-_, _, _ = Lgb_train_and_predict(df.iloc[:train_shape-1, :], df.iloc[train_shape:, :], lgb_config, run_id="tmp", trial=True)
+_, _, _ = Lgb_train_and_predict(df.iloc[:train_shape-1, :], df.iloc[train_shape:, :], settings, run_id="tmp", trial=True)
