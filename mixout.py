@@ -8,6 +8,7 @@ import torch.nn.init as init
 
 MIXOUT = 0.2
 
+
 class Mixout(InplaceFunction):
     @staticmethod
     def _make_noise(input):
@@ -16,7 +17,10 @@ class Mixout(InplaceFunction):
     @classmethod
     def forward(cls, ctx, input, target=None, p=0.0, training=False, inplace=False):
         if p < 0 or p > 1:
-            raise ValueError("A mix probability of mixout has to be between 0 and 1," " but got {}".format(p))
+            raise ValueError(
+                "A mix probability of mixout has to be between 0 and 1,"
+                " but got {}".format(p)
+            )
         if target is not None and input.size() != target.size():
             raise ValueError(
                 "A target tensor size must match with a input tensor size {},"
@@ -50,7 +54,9 @@ class Mixout(InplaceFunction):
         if ctx.p == 1:
             output = target
         else:
-            output = ((1 - ctx.noise) * target + ctx.noise * output - ctx.p * target) / (1 - ctx.p)
+            output = (
+                (1 - ctx.noise) * target + ctx.noise * output - ctx.p * target
+            ) / (1 - ctx.p)
         return output
 
     @staticmethod
@@ -67,6 +73,7 @@ def mixout(input, target=None, p=0.0, training=False, inplace=False):
 
 class MixLinear(torch.nn.Module):
     __constants__ = ["bias", "in_features", "out_features"]
+
     def __init__(self, in_features, out_features, bias=True, target=None, p=0.0):
         super(MixLinear, self).__init__()
         self.in_features = in_features
@@ -88,13 +95,20 @@ class MixLinear(torch.nn.Module):
             init.uniform_(self.bias, -bound, bound)
 
     def forward(self, input):
-        return F.linear(input, mixout(self.weight, self.target, self.p, self.training), self.bias)
+        return F.linear(
+            input, mixout(self.weight, self.target, self.p, self.training), self.bias
+        )
 
     def extra_repr(self):
         type = "drop" if self.target is None else "mix"
         return "{}={}, in_features={}, out_features={}, bias={}".format(
-            type + "out", self.p, self.in_features, self.out_features, self.bias is not None
+            type + "out",
+            self.p,
+            self.in_features,
+            self.out_features,
+            self.bias is not None,
         )
+
 
 def replace_mixout(model):
     for sup_module in model.modules():
@@ -105,7 +119,11 @@ def replace_mixout(model):
                 target_state_dict = module.state_dict()
                 bias = True if module.bias is not None else False
                 new_module = MixLinear(
-                    module.in_features, module.out_features, bias, target_state_dict["weight"], MIXOUT
+                    module.in_features,
+                    module.out_features,
+                    bias,
+                    target_state_dict["weight"],
+                    MIXOUT,
                 )
                 new_module.load_state_dict(target_state_dict)
                 setattr(sup_module, name, new_module)

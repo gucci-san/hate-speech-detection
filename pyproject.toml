@@ -29,6 +29,7 @@ sentencepiece = "^0.1.97"
 protobuf = "3.20.0"
 pyknp = "^0.6.1"
 sentence-transformers = "^2.2.2"
+black = "^22.10.0"
 
 [tool.poetry.dev-dependencies]
 
