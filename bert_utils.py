@@ -27,6 +27,7 @@ from torch.nn import functional as F
 from torch.cuda.amp import GradScaler, autocast
 
 from transformers import (
+    AutoConfig,
     AutoModel,
     RobertaForMaskedLM,
     RoFormerModel,
@@ -285,42 +286,11 @@ class HateSpeechModel(nn.Module):
     ):
         super(HateSpeechModel, self).__init__()
 
-        # pretrained model settings --
-        if model_name in ["rinna/japanese-roberta-base"]:
-            self.model = RobertaForMaskedLM.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 768
-        elif model_name in ["ganchengguang/Roformer-base-japanese"]:
-            self.model = RoFormerModel.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 768
-        elif model_name in ["cl-tohoku/bert-large-japanese"]:
-            self.model = AutoModel.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 1024
-        elif model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-            self.model = AutoModel.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 1024
-        elif model_name in ["rinna/japanese-gpt-1b"]:
-            self.model = AutoModel.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 2048
-        elif model_name in ["rinna/japanese-gpt2-medium", "xlm-roberta-large"]:
-            self.model = AutoModel.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 1024
-        else:
-            self.model = AutoModel.from_pretrained(
-                model_name, output_attentions=True, output_hidden_states=True
-            )
-            self.hidden_size = 768
+        model_cfg = AutoConfig.from_pretrained(model_name)
+        self.hidden_size = model_cfg.hidden_size
+        self.model = AutoModel.from_pretrained(
+            model_name, output_attentions=True, output_hidden_states=True
+        )
 
         self.model_name = model_name
         self.dropout = nn.Dropout(p=dropout)

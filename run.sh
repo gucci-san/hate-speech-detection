@@ -33,7 +33,7 @@
 #python bert_run_train.py --run_id "roberta_large_cat4_fold8" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed93" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed128" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
-python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed256" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed256" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold9" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 9 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold10" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 10 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold11" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 11 --model_custom_header "concatenate-4" --epochs 10
@@ -78,8 +78,8 @@ python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed256" --model_nam
 #python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
 #python bert_run_train.py --run_id "tmp_before_refactor" --folds 3 --model_custom_header "max_pooling" --epochs 5
 #python bert_run_test.py --run_id "tmp_epochs1"
-#python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
-#python bert_run_test.py --run_id "tmp"
+python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
+python bert_run_test.py --run_id "tmp"
 
 ## # prediction -
 #python bert_run_test.py --run_id "bert_baseline"
@@ -122,7 +122,7 @@ python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed256" --model_nam
 #python bert_run_test.py --run_id "roberta_large_cat4_fold8" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed93" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed128" 
-python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed256" 
+#python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed256" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold9" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold11" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold10"
