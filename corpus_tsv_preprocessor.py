@@ -36,5 +36,5 @@ df = pd.DataFrame({
     "source": args.source
 })
 df["clean_text"] = df["raw_text"].parallel_map(lambda x: clean_text(x))
-df = df.drop(["raw_text"], axis=1)
+#df = df.drop(["raw_text"], axis=1)
 df.to_feather(f"{input_root}{args.source}.feather")

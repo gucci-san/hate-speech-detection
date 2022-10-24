@@ -19,3 +19,6 @@
     * type(out) -> MaskedLMOutput
     * out.keys() -> odict keys(["logits", "attentions"])
         * output_hidden_states=Trueで、last_hidden_statesのmax_poolingでとりあえず通せる
+
+#### tokenizer
+* encode_plusは文頭の[SEP], 文末の[CLS]は勝手に足してくれる

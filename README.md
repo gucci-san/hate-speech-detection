@@ -4,6 +4,7 @@
 <スクリプト化>
 * CVとLBが完全一致という感じもしないのでAdversarialしてみてもいいかも
     * 意味なかったから多分データ少ないです
+        * それか文章的には本当に一緒
 
 * pseudo-labelling + corpusから追加データセット作成
     * pseudoがsoftだとstratified-kfoldのとこ実装変えないと通せないから注意
@@ -37,6 +38,11 @@
 
 #### 解析面
 * train_batch, fold数, NLPならpretrained-modelどれがいいかとかは最初に機械的に検証してデータ取っておくべき
+
+* Trust Public-LBのケースもある
+    * https://blog.recruit.co.jp/data/articles/kaggle-chaii/
+        * 「訓練データ数が少なく、手元で検証に用いることができるデータが少ないため」
+        * まさに今では？
 
 ### 確認したい事項
 * 結局BERTの中身わかってないからなあ......
