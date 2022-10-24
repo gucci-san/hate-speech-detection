@@ -166,6 +166,21 @@ def juman_parse(text):
     return words[:-1]  # last " " omit by [:-1] --
 
 
+def original_text_preprocess(text, use_juman=False):
+    """
+    おーぷん2chコーパスの原文をbertに入れる用に前処理する関数
+    tokenizer.encode_plusを想定しているので、文頭/文末のspecial_tokenは入れていない
+    """
+    text = text.replace(" __BR__ ", "、")
+    text = clean_text(text)
+    if use_juman:
+        text = juman_parse(text)
+        text = text.replace("\\t", "[SEP]")
+    else:
+        text = text.replace("\t", "[SEP]")
+    return text
+
+
 def preprocess_text(df, train_shape, model_name):
     df["clean_text"] = df["text"].map(lambda x: clean_text(x))
     if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
