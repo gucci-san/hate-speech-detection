@@ -31,7 +31,9 @@
 #python bert_run_train.py --run_id "roberta_large_cat4_fold3" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 3 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold7" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 7 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold8" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
-python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed93" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed93" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed128" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
+python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed256" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold9" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 9 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold10" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 10 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_cat4_fold11" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 11 --model_custom_header "concatenate-4" --epochs 10
@@ -118,7 +120,9 @@ python bert_run_train.py --run_id "roberta_large_cat4_fold8_seed93" --model_name
 #python bert_run_test.py --run_id "roberta_large_cat4_batch8"
 #python bert_run_test.py --run_id "roberta_large_cat4_batch64"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold8" 
-python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed93" 
+#python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed93" 
+#python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed128" 
+python bert_run_test.py --run_id "roberta_large_cat4_fold8_seed256" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold9" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold11" 
 #python bert_run_test.py --run_id "roberta_large_cat4_fold10"
