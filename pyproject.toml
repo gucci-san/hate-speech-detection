@@ -32,6 +32,7 @@ sentence-transformers = "^2.2.2"
 black = "^22.10.0"
 emoji = "^2.1.0"
 nagisa = "^0.2.8"
+GPUtil = "^1.4.0"
 
 [tool.poetry.dev-dependencies]
 

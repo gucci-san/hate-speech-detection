@@ -77,7 +77,8 @@
 #python bert_run_test.py --run_id "tmp"
 
 # original textで挙動を見ていく --
-python bert_run_train.py --run_id "bert_base_whm_org_text" --folds 5 --model_custom_header "concatenate-4" --train_data "raw_original_text" --max_length 384 --epochs 10
+#python bert_run_train.py --run_id "bert_base_whm_org_text" --folds 5 --model_custom_header "concatenate-4" --train_data "raw_original_text" --max_length 384 --epochs 10
+python bert_run_train.py --run_id "roberta_large_cat4_org_text_batch2" --train_data "raw_original_text" --train_batch_size 2 --max_length 384 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 
 # trial --
 #python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
@@ -135,3 +136,5 @@ python bert_run_train.py --run_id "bert_base_whm_org_text" --folds 5 --model_cus
 #python bert_run_test.py --run_id "roberta_large_cat4_fold16"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold20"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold25"
+
+#python bert_run_test.py --run_id "bert_base_whm_org_text"

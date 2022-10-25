@@ -29,8 +29,6 @@ from torch.cuda.amp import GradScaler, autocast
 from transformers import (
     AutoConfig,
     AutoModel,
-    RobertaForMaskedLM,
-    RoFormerModel,
     AutoTokenizer,
     T5Tokenizer,
     BertTokenizer,
@@ -535,7 +533,10 @@ def train_one_epoch(
                 Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
             )
 
+    del input_ids, attention_mask, targets
     gc.collect()
+    torch.cuda.empty_cache()
+
     return epoch_loss
 
 
@@ -567,7 +568,10 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
             Epoch=epoch, Valid_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
         )
 
+    del input_ids, attention_mask, targets
     gc.collect()
+    torch.cuda.empty_cache()
+
     return epoch_loss
 
 
@@ -623,6 +627,8 @@ def run_training(
             epoch=epoch,
             n_accumulate=n_accumulate,
         )
+
+        Debug_print("train_done, ")
 
         valid_epoch_loss = valid_one_epoch(
             model,

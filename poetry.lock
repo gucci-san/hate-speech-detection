@@ -355,6 +355,14 @@ unidic-lite = ["unidic-lite"]
 unidic = ["unidic"]
 
 [[package]]
+name = "gputil"
+version = "1.4.0"
+description = "GPUtil is a Python module for getting the GPU status from NVIDA GPUs using nvidia-smi."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "huggingface-hub"
 version = "0.10.0"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
@@ -1701,7 +1709,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "02530a4d66c90bc8fbf076e57b2bc476127f5164dbecb9b108c8468c501b6a78"
+content-hash = "8250eb03fa31b5df6894ffe52f82a5ac895ff28f3c25fdfbafd3437a6cd5660a"
 
 [metadata.files]
 appnope = [
@@ -1783,6 +1791,9 @@ fastjsonschema = []
 filelock = []
 fonttools = []
 fugashi = []
+gputil = [
+    {file = "GPUtil-1.4.0.tar.gz", hash = "sha256:099e52c65e512cdfa8c8763fca67f5a5c2afb63469602d5dcb4d296b3661efb9"},
+]
 huggingface-hub = []
 idna = []
 importlib-metadata = []
