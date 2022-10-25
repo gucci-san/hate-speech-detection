@@ -72,14 +72,27 @@
 #python bert_run_train.py --run_id "roberta_large_msd_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_train.py --run_id "roberta_large_mixout_cat4" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 10
 
+# original_textを使う --
+#python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling" --train_data "raw_original_text" --max_length 384
+#python bert_run_test.py --run_id "tmp"
 
+# original textで挙動を見ていく --
+#python bert_run_train.py --run_id "bert_base_whm_org_text" --folds 5 --model_custom_header "concatenate-4" --train_data "raw_original_text" --max_length 384 --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_org_batch8" --train_data "raw_original_text" --train_batch_size 8 --max_length 256 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5
+
+#python bert_run_train.py --run_id "roberta_large_cat4_org_batch16" --train_data "raw_original_text" --train_batch_size 16 --valid_batch_size 16 --max_length 256 \
+#--model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5
+#python bert_run_train.py --run_id "roberta_large_cat4_org_batch16_acc2_fold8" --train_data "raw_original_text" --train_batch_size 16 --valid_batch_size 16 --n_accumulate 2 --max_length 256 \
+#--model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5
+# python bert_run_train.py --run_id "roberta_large_cat4_org_batch16_acc2_fold8" --train_data "raw_original_text" --train_batch_size 16 --valid_batch_size 16 --n_accumulate 2 --max_length 256 \
+# --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5 --folds 8
 
 # trial --
 #python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
 #python bert_run_train.py --run_id "tmp_before_refactor" --folds 3 --model_custom_header "max_pooling" --epochs 5
 #python bert_run_test.py --run_id "tmp_epochs1"
-python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_custom_header "max_pooling"
-python bert_run_test.py --run_id "tmp"
+#python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_name "cl-tohoku/bert-large-japanese" --train_batch_size 8 --model_custom_header "max_pooling" --train_data "raw_original_text" --max_length 256
+#python bert_run_test.py --run_id "tmp"
 
 ## # prediction -
 #python bert_run_test.py --run_id "bert_baseline"
@@ -130,3 +143,7 @@ python bert_run_test.py --run_id "tmp"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold16"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold20"
 #python bert_run_test.py --run_id "roberta_large_cat4_fold25"
+
+#python bert_run_test.py --run_id "bert_base_whm_org_text"
+#python bert_run_test.py --run_id "roberta_large_cat4_org_batch8"
+python bert_run_test.py --run_id "roberta_large_cat4_org_batch16_acc2_fold8"

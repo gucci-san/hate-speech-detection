@@ -1,15 +1,16 @@
 import pandas as pd
 import os
 
-from pandarallel import pandarallel
-pandarallel.initialize(progress_bar=True)
-
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 
 from transformers import AdamW
 
-from colorama import Fore; r_=Fore.RED; sr_=Fore.RESET
+from colorama import Fore
+
+r_ = Fore.RED
+sr_ = Fore.RESET
+
 from glob import glob
 from config import *
 from bert_utils import *
@@ -17,8 +18,6 @@ from bert_utils import *
 from mixout import *
 
 import argparse
-
-
 
 
 # ====================================== #
@@ -36,7 +35,9 @@ parser.add_argument("--train_batch_size", type=int, default=32)
 parser.add_argument("--valid_batch_size", type=int, default=64)
 parser.add_argument("--test_batch_size", type=int, default=64)
 parser.add_argument("--use_amp", type=bool, default=True)
-parser.add_argument("--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking")
+parser.add_argument(
+    "--model_name", type=str, default=r"cl-tohoku/bert-base-japanese-whole-word-masking"
+)
 parser.add_argument("--model_custom_header", type=str, default="max_pooling")
 parser.add_argument("--max_length", type=int, default=76)
 parser.add_argument("--dropout", type=float, default=0.2)
@@ -90,7 +91,7 @@ else:
     if args.trial:
         assert True
     else:
-        assert False, (f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}")
+        assert False, f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}"
 
 
 # 計算時点でのpyファイル, settingsを保存 --
@@ -99,8 +100,6 @@ if not os.path.exists(f"{settings.output_path}src/"):
 os.system(f"cp ./*py {settings.output_path}src/")
 os.system(f"cp ./*sh {settings.output_path}src/")
 settings.to_json(f"{settings.output_path}settings.json", indent=4)
-
-
 
 
 # ====================================== #
@@ -128,16 +127,14 @@ Write_log(log, f"train:{train_df.shape}, test:{test_df.shape}\n")
 Write_log(log, "***************** TRAINING ********************")
 
 
-
-
 # ====================================== #
 #                                        #
 #    --          Training          --    #
 #                                        #
 # ====================================== #
 for fold in range(0, settings.folds):
-    
-    #print(f"{y_} ====== Fold: {fold} ======{sr_}")
+
+    # print(f"{y_} ====== Fold: {fold} ======{sr_}")
     Write_log(log, f"\n================== Fold: {fold} ==================")
 
     # Create DataLoader --
@@ -149,7 +146,7 @@ for fold in range(0, settings.folds):
         val_batch_size=settings.valid_batch_size,
         max_length=settings.max_length,
         num_classes=settings.num_classes,
-        text_col="clean_text"
+        text_col="clean_text",
     )
 
     # Model construct --
@@ -158,26 +155,37 @@ for fold in range(0, settings.folds):
         num_classes=settings.num_classes,
         custom_header=settings.model_custom_header,
         dropout=settings.dropout,
-        )
+    )
     if settings.mixout:
         model = replace_mixout(model)  # mixout --
 
     # Define Optimizer and Scheduler --
-    optimizer = AdamW(model.parameters(), lr=settings.learning_rate, weight_decay=settings.weight_decay)
+    optimizer = AdamW(
+        model.parameters(),
+        lr=settings.learning_rate,
+        weight_decay=settings.weight_decay,
+    )
     scheduler = fetch_scheduler(optimizer=optimizer, scheduler=settings.scheduler_name)
 
     model.to(device)
     model, history = run_training(
-        model, train_loader, valid_loader, 
-        optimizer, scheduler, settings.n_accumulate, device, settings.use_amp, 
-        settings.epochs, fold, settings.output_path,
-        log, save_checkpoint=False
+        model,
+        train_loader,
+        valid_loader,
+        optimizer,
+        scheduler,
+        settings.n_accumulate,
+        device,
+        settings.use_amp,
+        settings.epochs,
+        fold,
+        settings.output_path,
+        log,
+        save_checkpoint=False,
     )
 
     del model, history, train_loader, valid_loader
     _ = gc.collect()
-
-
 
 
 # ====================================== #
@@ -185,7 +193,8 @@ for fold in range(0, settings.folds):
 #    --         Validate           --    #
 #                                        #
 # ====================================== #
-model_paths = glob(f"{settings.output_path}*.pth"); model_paths.sort()
+model_paths = glob(f"{settings.output_path}*.pth")
+model_paths.sort()
 
 fold_f1 = []
 fold_acc = []
@@ -203,18 +212,25 @@ for fold in range(0, settings.folds):
         val_batch_size=settings.valid_batch_size,
         max_length=settings.max_length,
         num_classes=settings.num_classes,
-        text_col="clean_text"
+        text_col="clean_text",
     )
 
     valid = train_df[train_df.kfold == fold]
     out = inference(
-        settings.model_name, settings.num_classes,
-        settings.model_custom_header, settings.dropout,
-        model_paths[fold], valid_loader, device)
+        settings.model_name,
+        settings.num_classes,
+        settings.model_custom_header,
+        settings.dropout,
+        model_paths[fold],
+        valid_loader,
+        device,
+    )
 
     for _class in range(0, settings.num_classes):
         valid[f"{model_id}_oof_class{_class}"] = out[:, _class]
-        train_df.loc[valid.index.tolist(), f"{model_id}_oof_class_{_class}"] = valid[f"{model_id}_oof_class{_class}"]
+        train_df.loc[valid.index.tolist(), f"{model_id}_oof_class_{_class}"] = valid[
+            f"{model_id}_oof_class{_class}"
+        ]
 
     valid_preds = np.argmax(out, axis=1)
 
@@ -229,8 +245,14 @@ test_df.reset_index(drop=False).to_feather(f"{settings.output_path}test_df.feath
 
 # log validatation result --
 Write_log(log, "\n++++++++++++++++++++++++++++++++++++++++\n")
-Write_log(log, f">> mean_valid_metric : f1 = {np.mean(fold_f1):.4f} ... acc = {np.mean(fold_acc):.4f}")
-Write_log(log, f">>  all_valid_metric : f1 = {f1_score(train_df.label, train_df.model_pred):.4f} ... acc = {accuracy_score(train_df.label, train_df.model_pred):.4f} ")
+Write_log(
+    log,
+    f">> mean_valid_metric : f1 = {np.mean(fold_f1):.4f} ... acc = {np.mean(fold_acc):.4f}",
+)
+Write_log(
+    log,
+    f">>  all_valid_metric : f1 = {f1_score(train_df.label, train_df.model_pred):.4f} ... acc = {accuracy_score(train_df.label, train_df.model_pred):.4f} ",
+)
 
 # experiment manage --
 mean_valid_metric = np.mean(fold_f1)

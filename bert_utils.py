@@ -29,8 +29,6 @@ from torch.cuda.amp import GradScaler, autocast
 from transformers import (
     AutoConfig,
     AutoModel,
-    RobertaForMaskedLM,
-    RoFormerModel,
     AutoTokenizer,
     T5Tokenizer,
     BertTokenizer,
@@ -87,6 +85,21 @@ def seed_everything(seed=42):
 seed_everything(SEED)
 
 
+def nchars(s, n):
+    """
+    文字列 s に、同じ文字が n 個以上連続している部分文字列を見つける
+    https://qiita.com/norioc/items/324d9210ae2db29d08e6
+    """
+    assert n > 0
+    reg = re.compile("(.)\\1{%d,}" % (n - 1))  # カンマを取ると n 個ちょうどになる
+    while True:
+        m = reg.search(s)
+        if not m:
+            break
+        yield m.group(0)
+        s = s[m.end() :]
+
+
 def clean_text(text: str) -> str:
     """
     日本語から記号とかを削除
@@ -97,11 +110,26 @@ def clean_text(text: str) -> str:
     * https://note.com/narudesu/n/na35de30a583a
 
     """
+    # 特定の顔文字は指定して除外する --
+    text = text.replace("(´Д`)yー", "")
+    text = text.replace("( ´Д`)yー", "")
+    text = text.replace("<(_ _)>", "")
+    text = text.replace("m(_ _)m", "")
+
     # 改行コード削除 --
     text = text.replace("\n", "").replace("\r", "")
 
     # 半角-全角の正規化 --
     text = neologdn.normalize(text)
+
+    # re.subで抜けていなかった記号を削除 --
+    # ## 3点リーダ --
+    text = text.replace("・・・", "")
+    text = text.replace("...", "")
+    text = text.replace("…", "")
+
+    # ## ^^ --
+    text = text.replace("^", "")
 
     # URL削除 --
     text = re.sub(r"http?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
@@ -148,6 +176,14 @@ def prepare_dataframe(train_data):
         train = pd.concat([train, corpus_labeled])
         test = pd.read_csv(data_path + "test.csv")
 
+    elif train_data == "raw_original_text":
+        train = pd.read_feather(
+            f"{input_root}dataset_with_original_text/train_with_original_text.feather"
+        )
+        test = pd.read_feather(
+            f"{input_root}dataset_with_original_text/test_with_original_text.feather"
+        )
+
     else:
         Debug_print(f"NOT implemented : train_data=={train_data}")
         assert False
@@ -173,6 +209,7 @@ def original_text_preprocess(text, use_juman=False):
     tokenizer.encode_plusを想定しているので、文頭/文末のspecial_tokenは入れていない
     """
     text = text.replace(" __BR__ ", "、")
+    text = text.replace("__BR__", "、")  # __BR__が連続したら1つ残ってしまう --
     text = clean_text(text)
     if use_juman:
         text = juman_parse(text)
@@ -182,10 +219,21 @@ def original_text_preprocess(text, use_juman=False):
     return text
 
 
-def preprocess_text(df, train_shape, model_name):
-    df["clean_text"] = df["text"].map(lambda x: clean_text(x))
-    if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-        df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
+def preprocess_text(df, train_shape, model_name, train_data="raw"):
+    if train_data == "raw_original_text":
+        if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+            df["clean_test"] = df["original_text"].parallel_map(
+                lambda x: original_text_preprocess(x, use_juman=True)
+            )
+        else:
+            df["clean_test"] = df["original_text"].parallel_map(
+                lambda x: original_text_preprocess(x)
+            )
+    else:
+        df["clean_text"] = df["text"].map(lambda x: clean_text(x))
+        if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+            df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
+
     train_df = df.loc[: train_shape - 1, :]
     test_df = df.loc[train_shape:, :]
 
@@ -253,8 +301,8 @@ class HateSpeechDataset(Dataset):
         text = self.text[index]
         inputs_text = self.tokenizer.encode_plus(
             text,
-            truncation=True,
-            add_special_tokens=True,
+            truncation=True,  # 長過ぎたら切る --
+            add_special_tokens=True,  # [CLS][SEP]を入れるか --
             max_length=self.max_len,
             padding="max_length",
         )
@@ -485,7 +533,10 @@ def train_one_epoch(
                 Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
             )
 
+    del input_ids, attention_mask, targets
     gc.collect()
+    torch.cuda.empty_cache()
+
     return epoch_loss
 
 
@@ -517,7 +568,10 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
             Epoch=epoch, Valid_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
         )
 
+    del input_ids, attention_mask, targets
     gc.collect()
+    torch.cuda.empty_cache()
+
     return epoch_loss
 
 
@@ -573,6 +627,9 @@ def run_training(
             epoch=epoch,
             n_accumulate=n_accumulate,
         )
+
+        Debug_print("train_done, ")
+        time.sleep(10)
 
         valid_epoch_loss = valid_one_epoch(
             model,

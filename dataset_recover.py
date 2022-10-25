@@ -20,33 +20,6 @@ def Debug_print(x):
     return None
 
 
-## def recover_original_text(df, corpus_df):
-##
-##     original_text_list = []
-##     nofinds_data_index_list = []
-##     duplicated_data_index_list = []
-##     for i in tqdm(range(df.shape[0]), total=df.shape[0]):
-##         first_sentence = df.loc[i, "first_sentence"]
-##         text_picked = [x for x in corpus_df["text"].values.tolist() if first_sentence in x]
-##
-##         if len(text_picked) == 0: # データセットはある程度正規化されているので、データ元からヒットしないケースがある --
-##             nofinds_data_index_list.append(i)
-##             original_text_list.append("")
-##             continue
-##
-##         elif len(text_picked) > 1: # 1つの文に対して2つ以上のレスアンカーがついていた場合, 2つ以上ヒットする --
-##             duplicated_data_index_list.append(i)  # 分離不能な場合があるので諦めてindexだけメモっときます --
-##             original_text_list.append(repr(text_picked[0]))
-##
-##         else:  # 1つだけヒット
-##             original_text_list.append(repr(text_picked[0]))
-##
-##     df["original_text"] = original_text_list
-##     df = df.drop(["first_sentence"], axis=1)
-##
-##     return df, duplicated_data_index_list, nofinds_data_index_list
-
-
 def find_longest_sentence(text):
     text_length_list = [len(x) for x in text.split("\n")]
     return text.split("\n")[np.argmax(text_length_list)]
@@ -101,8 +74,8 @@ def recover_original_text(df, corpus_df):
 #               データセット読み込み
 #
 # ##########################################
-train_df = pd.read_csv(data_path + "train.csv").head(100)
-test_df = pd.read_csv(data_path + "test.csv").head(100)
+train_df = pd.read_csv(data_path + "train.csv")
+test_df = pd.read_csv(data_path + "test.csv")
 
 output_path = f"{input_root}/dataset_with_original_text"
 
