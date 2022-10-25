@@ -221,12 +221,13 @@ def original_text_preprocess(text, use_juman=False):
 
 def preprocess_text(df, train_shape, model_name, train_data="raw"):
     if train_data == "raw_original_text":
+        Debug_print("... ... Process -> raw_original_text")
         if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-            df["clean_test"] = df["original_text"].parallel_map(
+            df["clean_text"] = df["original_text"].parallel_map(
                 lambda x: original_text_preprocess(x, use_juman=True)
             )
         else:
-            df["clean_test"] = df["original_text"].parallel_map(
+            df["clean_text"] = df["original_text"].parallel_map(
                 lambda x: original_text_preprocess(x)
             )
     else:

@@ -111,7 +111,9 @@ settings.to_json(f"{settings.output_path}settings.json", indent=4)
 df, train_shape = prepare_dataframe(train_data=settings.train_data)
 
 # preprocess --
-train_df, test_df = preprocess_text(df, train_shape, settings.model_name)
+train_df, test_df = preprocess_text(
+    df, train_shape, settings.model_name, train_data=settings.train_data
+)
 
 # make folds --
 skf = StratifiedKFold(n_splits=settings.folds, shuffle=True, random_state=SEED)
