@@ -87,6 +87,21 @@ def seed_everything(seed=42):
 seed_everything(SEED)
 
 
+def nchars(s, n):
+    """
+    文字列 s に、同じ文字が n 個以上連続している部分文字列を見つける
+    https://qiita.com/norioc/items/324d9210ae2db29d08e6
+    """
+    assert n > 0
+    reg = re.compile("(.)\\1{%d,}" % (n - 1))  # カンマを取ると n 個ちょうどになる
+    while True:
+        m = reg.search(s)
+        if not m:
+            break
+        yield m.group(0)
+        s = s[m.end() :]
+
+
 def clean_text(text: str) -> str:
     """
     日本語から記号とかを削除
@@ -97,11 +112,26 @@ def clean_text(text: str) -> str:
     * https://note.com/narudesu/n/na35de30a583a
 
     """
+    # 特定の顔文字は指定して除外する --
+    text = text.replace("(´Д`)yー", "")
+    text = text.replace("( ´Д`)yー", "")
+    text = text.replace("<(_ _)>", "")
+    text = text.replace("m(_ _)m", "")
+
     # 改行コード削除 --
     text = text.replace("\n", "").replace("\r", "")
 
     # 半角-全角の正規化 --
     text = neologdn.normalize(text)
+
+    # re.subで抜けていなかった記号を削除 --
+    # ## 3点リーダ --
+    text = text.replace("・・・", "")
+    text = text.replace("...", "")
+    text = text.replace("…", "")
+
+    # ## ^^ --
+    text = text.replace("^", "")
 
     # URL削除 --
     text = re.sub(r"http?://[\w/:%#\$&\?\(\)~\.=\+\-]+", "", text)
@@ -173,6 +203,7 @@ def original_text_preprocess(text, use_juman=False):
     tokenizer.encode_plusを想定しているので、文頭/文末のspecial_tokenは入れていない
     """
     text = text.replace(" __BR__ ", "、")
+    text = text.replace("__BR__", "、")  # __BR__が連続したら1つ残ってしまう --
     text = clean_text(text)
     if use_juman:
         text = juman_parse(text)

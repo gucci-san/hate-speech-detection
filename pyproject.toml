@@ -30,6 +30,8 @@ protobuf = "3.20.0"
 pyknp = "^0.6.1"
 sentence-transformers = "^2.2.2"
 black = "^22.10.0"
+emoji = "^2.1.0"
+nagisa = "^0.2.8"
 
 [tool.poetry.dev-dependencies]
 
