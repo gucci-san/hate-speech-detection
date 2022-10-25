@@ -1,8 +1,8 @@
 import torch
 
-# SEED = 42
+SEED = 42
 # SEED = 93
-SEED = 256
+# SEED = 256
 
 data_path = "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/"
 input_root = "./input/"

@@ -178,6 +178,14 @@ def prepare_dataframe(train_data):
         train = pd.concat([train, corpus_labeled])
         test = pd.read_csv(data_path + "test.csv")
 
+    elif train_data == "raw_original_text":
+        train = pd.read_feather(
+            f"{input_root}dataset_with_original_text/train_with_original_text.feather"
+        )
+        test = pd.read_feather(
+            f"{input_root}dataset_with_original_text/test_with_original_text.feather"
+        )
+
     else:
         Debug_print(f"NOT implemented : train_data=={train_data}")
         assert False
@@ -213,10 +221,21 @@ def original_text_preprocess(text, use_juman=False):
     return text
 
 
-def preprocess_text(df, train_shape, model_name):
-    df["clean_text"] = df["text"].map(lambda x: clean_text(x))
-    if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-        df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
+def preprocess_text(df, train_shape, model_name, train_data="raw"):
+    if train_data == "raw_original_text":
+        if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+            df["clean_test"] = df["original_text"].parallel_map(
+                lambda x: original_text_preprocess(x, use_juman=True)
+            )
+        else:
+            df["clean_test"] = df["original_text"].parallel_map(
+                lambda x: original_text_preprocess(x)
+            )
+    else:
+        df["clean_text"] = df["text"].map(lambda x: clean_text(x))
+        if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
+            df["clean_text"] = df["clean_text"].parallel_map(lambda x: juman_parse(x))
+
     train_df = df.loc[: train_shape - 1, :]
     test_df = df.loc[train_shape:, :]
 
@@ -284,8 +303,8 @@ class HateSpeechDataset(Dataset):
         text = self.text[index]
         inputs_text = self.tokenizer.encode_plus(
             text,
-            truncation=True,
-            add_special_tokens=True,
+            truncation=True,  # 長過ぎたら切る --
+            add_special_tokens=True,  # [CLS][SEP]を入れるか --
             max_length=self.max_len,
             padding="max_length",
         )
