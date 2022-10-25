@@ -629,6 +629,7 @@ def run_training(
         )
 
         Debug_print("train_done, ")
+        time.sleep(10)
 
         valid_epoch_loss = valid_one_epoch(
             model,
