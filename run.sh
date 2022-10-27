@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# test --
+#python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2
+
+
+
 # single run --
 #python bert_run_train.py --run_id "bert_baseline" --model_name "cl-tohoku/bert-base-japanese-whole-word-masking" --epochs 10
 #python bert_run_train.py --run_id "roberta_baseline" --model_name "rinna/japanese-roberta-base" --epochs 10 --trial True
@@ -89,6 +94,13 @@
 #python bert_run_test.py --run_id "compare_batch_accum_roberta_large_cat4_batch2_acc16"
 #python bert_run_test.py --run_id "compare_batch_accum_roberta_large_cat4_batch1_acc32"
 
+# 10/27時点で最強の組み合わせを試す --
+#python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_folds8" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_test.py --run_id "roberta_large_cat4_batch4_acc8_folds8"
+
+# ヘッダにtanhを足してみる --
+python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_tanh" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 10
+
 
 # メモリエラー
 #python bert_run_train.py --run_id "roberta_large_cat4_batch512" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 512 --model_custom_header "concatenate-4" --epochs 10
@@ -124,7 +136,7 @@
 #python bert_run_train.py --run_id "tmp_epochs1" --folds 2 --model_custom_header "max_pooling" --epochs 2
 #python bert_run_train.py --run_id "tmp_before_refactor" --folds 3 --model_custom_header "max_pooling" --epochs 5
 #python bert_run_test.py --run_id "tmp_epochs1"
-python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_name "cl-tohoku/bert-large-japanese" --train_batch_size 8 --model_custom_header "max_pooling" --train_data "raw_original_text" --max_length 256
+#python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_name "cl-tohoku/bert-large-japanese" --train_batch_size 8 --model_custom_header "max_pooling" --train_data "raw_original_text" --max_length 256
 #python bert_run_test.py --run_id "tmp"
 
 ## # prediction -
@@ -179,4 +191,6 @@ python bert_run_train.py --run_id "tmp" --trial True --folds 2 --model_name "cl-
 
 #python bert_run_test.py --run_id "bert_base_whm_org_text"
 #python bert_run_test.py --run_id "roberta_large_cat4_org_batch8"
+#python bert_run_test.py --run_id "roberta_large_cat4_org_batch16_acc2_fold8"
+
 #python bert_run_test.py --run_id "roberta_large_cat4_org_batch16_acc2_fold8"

@@ -366,6 +366,9 @@ class HateSpeechModel(nn.Module):
             self.lstm = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
         elif custom_header == "concatenate-4":
             self.fc_4 = nn.Linear(self.hidden_size * 4, num_classes)
+            # self.fc_4 = nn.Sequential(
+            #    nn.Tanh(), nn.Linear(self.hidden_size * 4, num_classes)
+            # )
 
         self.custom_header = custom_header
         print(f"{y_}{self.custom_header}{sr_}")
