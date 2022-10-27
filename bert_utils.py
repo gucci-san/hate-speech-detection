@@ -78,8 +78,15 @@ def seed_everything(seed=42):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+    # この２つ結局どっちなんだ？ --
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.benchmark = False
+
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 
 seed_everything(SEED)
@@ -221,12 +228,13 @@ def original_text_preprocess(text, use_juman=False):
 
 def preprocess_text(df, train_shape, model_name, train_data="raw"):
     if train_data == "raw_original_text":
+        Debug_print("... ... Process -> raw_original_text")
         if model_name in ["nlp-waseda/roberta-large-japanese-seq512"]:
-            df["clean_test"] = df["original_text"].parallel_map(
+            df["clean_text"] = df["original_text"].parallel_map(
                 lambda x: original_text_preprocess(x, use_juman=True)
             )
         else:
-            df["clean_test"] = df["original_text"].parallel_map(
+            df["clean_text"] = df["original_text"].parallel_map(
                 lambda x: original_text_preprocess(x)
             )
     else:
@@ -328,99 +336,118 @@ class HateSpeechDataset(Dataset):
             }
 
 
+class BertClassificationMaxPoolingHeader(nn.Module):
+    def __init__(self, hidden_size, num_classes):
+        super(BertClassificationMaxPoolingHeader, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        # max pooling --
+        self.fc = nn.Linear(self.hidden_size, self.num_classes)
+
+    def forward(self, base_output):
+        out = base_output["hidden_states"][-1].max(axis=1)[0]
+        out = self.fc(out)
+        return out
+
+
+class BertClassificationConvolutionHeader(nn.Module):
+    def __init__(self, hidden_size, num_classes):
+        super(BertClassificationConvolutionHeader, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        # conv1d --
+        self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
+        self.cnn2 = nn.Conv1d(256, self.num_classes, kernel_size=2, padding=1)
+
+    def forward(self, base_output):
+        last_hidden_state = base_output["hidden_states"][-1].permute(0, 2, 1)
+        cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
+        cnn_embeddings = self.cnn2(cnn_embeddings)
+        outputs = cnn_embeddings.max(axis=2)[0]
+        return outputs
+
+
+class BertClassificationLSTMHeader(nn.Module):
+    def __init__(self, hidden_size, num_classes):
+        super(BertClassificationLSTMHeader, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        # lstm --
+        self.lstm = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
+        self.fc = nn.Linear(self.hidden_size, self.num_classes)
+
+    def forward(self, base_output):
+        last_hidden_state = base_output["hidden_states"][-1]
+        out = self.lstm(last_hidden_state, None)[0]
+        out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
+        outputs = self.fc(out)
+        return outputs
+
+
+class BertClassificationConcatenateHeader(nn.Module):
+    def __init__(self, hidden_size, num_classes, use_layer_num=4):
+        super(BertClassificationConcatenateHeader, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_classes = num_classes
+        self.use_layer_num = use_layer_num
+
+        # concatenate --
+        self.fc = nn.Linear(self.hidden_size * self.use_layer_num, self.num_classes)
+
+    def forward(self, base_output):
+        out = torch.cat(
+            [base_output["hidden_states"][-1 * i][:, 0, :] for i in range(1, 4 + 1)],
+            dim=1,
+        )
+        outputs = self.fc(out)
+        return outputs
+
+
 class HateSpeechModel(nn.Module):
     def __init__(
-        self, model_name, num_classes, custom_header=None, dropout=0.2, n_msd=None
+        self,
+        model_name,
+        num_classes,
+        custom_header="max_pooling",
+        dropout=0.2,
+        n_msd=None,
     ):
         super(HateSpeechModel, self).__init__()
-
-        model_cfg = AutoConfig.from_pretrained(model_name)
-        self.hidden_size = model_cfg.hidden_size
-        self.model = AutoModel.from_pretrained(
+        self.cfg = AutoConfig.from_pretrained(
             model_name, output_attentions=True, output_hidden_states=True
         )
+        self.num_classes = num_classes
+        self.l1 = AutoModel.from_pretrained(model_name)
 
-        self.model_name = model_name
-        self.dropout = nn.Dropout(p=dropout)
-        self.dropouts = (
-            nn.ModuleList([nn.Dropout(p=dropout) for _ in range(n_msd)])
-            if n_msd is not None
-            else None
-        )
-        self.n_msd = n_msd
-        self.fc = nn.Linear(self.hidden_size, num_classes)
-
-        # bert custom-header settings --
-        if custom_header == "conv":
-            self.cnn1 = nn.Conv1d(self.hidden_size, 256, kernel_size=2, padding=1)
-            self.cnn2 = nn.Conv1d(256, num_classes, kernel_size=2, padding=1)
+        if custom_header == "max_pooling":
+            self.l2 = BertClassificationMaxPoolingHeader(
+                self.cfg.hidden_size,
+            )
+        elif custom_header == "conv":
+            self.l2 = BertClassificationConvolutionHeader(
+                self.cfg.hidden_size, self.num_classes
+            )
         elif custom_header == "lstm":
-            self.lstm = nn.LSTM(self.hidden_size, self.hidden_size, batch_first=True)
-        elif custom_header == "concatenate-4":
-            self.fc_4 = nn.Linear(self.hidden_size * 4, num_classes)
-
-        self.custom_header = custom_header
-        print(f"{y_}{self.custom_header}{sr_}")
+            self.l2 = BertClassificationLSTMHeader(
+                self.cfg.hidden_size, self.num_classes
+            )
+        elif custom_header in ["concatenate", "concatenate-4"]:
+            self.l2 = BertClassificationConcatenateHeader(
+                self.cfg.hidden_size, self.num_classes, use_layer_num=4
+            )
+        else:
+            assert (
+                False
+            ), f"custom header == {custom_header} not defined (or implemented)"
 
     def forward(self, input_ids, attention_mask):
-        out = self.model(
+        out = self.l1(
             input_ids=input_ids,
             attention_mask=attention_mask,
             output_hidden_states=True,
         )
-
-        # 最終的に[batch_size, hidden_size]になるようにcustom_headerを作っていく --
-        # https://www.ai-shift.co.jp/techblog/2145 --
-        if self.custom_header == "max_pooling":
-            out = out["hidden_states"][-1].max(axis=1)[
-                0
-            ]  # last_hidden_state + max_pooling --
-            if self.n_msd is not None:
-                outputs = (
-                    sum([self.fc(dropout(out)) for dropout in self.dropouts])
-                    / self.n_msd
-                )
-            else:
-                outputs = self.fc(out)
-
-        elif self.custom_header == "conv":
-            last_hidden_state = out["hidden_states"][-1].permute(0, 2, 1)
-            cnn_embeddings = F.relu(self.cnn1(last_hidden_state))
-            cnn_embeddings = self.cnn2(cnn_embeddings)
-            if self.n_msd is not None:
-                out = cnn_embeddings.max(axis=2)[0]
-                outputs = (
-                    sum([self.fc(dropout(out)) for dropout in self.dropouts])
-                    / self.n_msd
-                )
-            else:
-                outputs = cnn_embeddings.max(axis=2)[0]
-
-        elif self.custom_header == "lstm":
-            last_hidden_state = out["hidden_states"][-1]
-            out = self.lstm(last_hidden_state, None)[0]
-            out = out[:, -1, :]  # lstmの時間方向の最終層を抜く, [batch_size, hidden_size] --
-            if self.n_msd is not None:
-                outputs = (
-                    sum([self.fc(dropout(out)) for dropout in self.dropouts])
-                    / self.n_msd
-                )
-            else:
-                outputs = self.fc(out)
-
-        elif self.custom_header == "concatenate-4":
-            out = torch.cat(
-                [out["hidden_states"][-1 * i][:, 0, :] for i in range(1, 4 + 1)], dim=1
-            )
-            if self.n_msd is not None:
-                outputs = (
-                    sum([self.fc_4(dropout(out)) for dropout in self.dropouts])
-                    / self.n_msd
-                )
-            else:
-                outputs = self.fc_4(out)
-
-        return outputs
+        out = self.l2(out)
+        return out
 
 
 def prepare_loaders(
@@ -453,10 +480,14 @@ def prepare_loaders(
         label_name=label_name,
     )
 
+    g = torch.Generator()
+    g.manual_seed(SEED)
     train_loader = DataLoader(
         train_dataset,
         batch_size=trn_batch_size,
         num_workers=2,
+        worker_init_fn=seed_worker,
+        generator=g,
         shuffle=True,
         pin_memory=True,
         drop_last=True,
