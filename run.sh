@@ -1,7 +1,10 @@
 #!/bin/sh
 
-# test --
+## test --
 #python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2
+
+# serious test --
+python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 6 --trial True --folds 5
 
 
 
@@ -99,7 +102,7 @@
 #python bert_run_test.py --run_id "roberta_large_cat4_batch4_acc8_folds8"
 
 # ヘッダにtanhを足してみる --
-python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_tanh" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_tanh" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 10
 
 
 # メモリエラー
