@@ -414,7 +414,7 @@ def torch_init_params_by_name(model, name):
         if name in param_name
     ]
     for param in init_params:
-        print(f"... {param[0]} initialized ... ")
+        print(f"{g_}... {param[0]} initialized ... {sr_}")
         nn.init.normal_(param[1], mean=0, std=0.02)
 
 
@@ -426,7 +426,7 @@ def torch_freeze_params_by_name(model, name):
         if name in param_name
     ]
     for param in freeze_params:
-        print(f"... {param[0]} freezed ... ")
+        print(f"{b_}... {param[0]} freezed ... {sr_}")
         param[1].requires_grad = False
 
 

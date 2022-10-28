@@ -42,6 +42,7 @@ parser.add_argument("--model_custom_header", type=str, default="max_pooling")
 parser.add_argument("--max_length", type=int, default=76)
 parser.add_argument("--dropout", type=float, default=0.2)
 parser.add_argument("--mixout", type=bool, default=False)
+parser.add_argument("--init_layer", type=int, default=None)
 parser.add_argument("--learning_rate", type=float, default=1e-5)
 parser.add_argument("--scheduler_name", type=str, default="CosineAnnealingLR")
 parser.add_argument("--min_lr", type=float, default=1e-6)
@@ -72,6 +73,7 @@ settings["model_custom_header"] = args.model_custom_header
 settings["max_length"] = args.max_length
 settings["dropout"] = args.dropout
 settings["mixout"] = args.mixout
+settings["init_layer"] = args.init_layer
 # optimizer settings --
 settings["learning_rate"] = args.learning_rate
 settings["scheduler_name"] = args.scheduler_name
@@ -160,6 +162,13 @@ for fold in range(0, settings.folds):
     )
     if settings.mixout:
         model = replace_mixout(model)  # mixout --
+
+    if settings.init_layer is not None:
+        for i in range(
+            (model.cfg.num_hidden_layers - settings.init_layer),
+            (model.cfg.num_hidden_layers),
+        ):
+            torch_init_params_by_name(model, name=f"{i}")
 
     # Define Optimizer and Scheduler --
     optimizer = AdamW(
