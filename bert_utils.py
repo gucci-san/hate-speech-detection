@@ -406,6 +406,30 @@ class BertClassificationConcatenateHeader(nn.Module):
         return outputs
 
 
+def torch_init_params_by_name(model, name):
+    """nameを含むnamed_parameterを初期化する関数"""
+    init_params = [
+        (param_name, params)
+        for (param_name, params) in model.named_parameters()
+        if name in param_name
+    ]
+    for param in init_params:
+        print(f"... {param[0]} initialized ... ")
+        nn.init.normal_(param[1], mean=0, std=0.02)
+
+
+def torch_freeze_params_by_name(model, name):
+    """nameを含むnamed_parameterをfreeze(required_grad=False)する関数"""
+    freeze_params = [
+        (param_name, params)
+        for (param_name, params) in model.named_parameters()
+        if name in param_name
+    ]
+    for param in freeze_params:
+        print(f"... {param[0]} freezed ... ")
+        param[1].requires_grad = False
+
+
 class HateSpeechModel(nn.Module):
     def __init__(
         self,
