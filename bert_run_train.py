@@ -5,6 +5,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, accuracy_score
 
 from transformers import AdamW
+from torch.cuda.amp import GradScaler
 
 from colorama import Fore
 
@@ -51,8 +52,8 @@ parser.add_argument("--weight_decay", type=float, default=1e-5)
 parser.add_argument("--n_accumulate", type=int, default=1)
 parser.add_argument("--remark", type=str, default=None)
 parser.add_argument("--trial", type=bool, default=False)
+parser.add_argument("--save_checkpoint", type=bool, default=False)
 args, unknown = parser.parse_known_args()
-
 
 settings = pd.Series(dtype=object)
 # project settings --
@@ -83,8 +84,8 @@ settings["weight_decay"] = args.weight_decay
 settings["n_accumulate"] = args.n_accumulate
 # experiment remarks --
 settings["remark"] = args.remark
+settings["save_checkpoint"] = args.save_checkpoint
 settings["seed"] = SEED
-
 
 # run_idが重複したらlogが消えてしまうので、プログラムごと止めるようにする --
 if not os.path.exists(settings.output_path):
@@ -160,10 +161,14 @@ for fold in range(0, settings.folds):
         custom_header=settings.model_custom_header,
         dropout=settings.dropout,
     )
+
+    # Additional model treatment --
+    ## Mixout --
     if settings.mixout:
         model = replace_mixout(model)  # mixout --
 
-    if settings.init_layer is not None:
+    ## Re-init layer --
+    if not settings.isna()["init_layer"]:
         for i in range(
             (model.cfg.num_hidden_layers - settings.init_layer),
             (model.cfg.num_hidden_layers),
@@ -178,6 +183,9 @@ for fold in range(0, settings.folds):
     )
     scheduler = fetch_scheduler(optimizer=optimizer, scheduler=settings.scheduler_name)
 
+    # Define GradScaler --
+    scaler = GradScaler(enabled=settings.use_amp)
+
     model.to(device)
     model, history = run_training(
         model,
@@ -187,12 +195,13 @@ for fold in range(0, settings.folds):
         scheduler,
         settings.n_accumulate,
         device,
+        scaler,
         settings.use_amp,
         settings.epochs,
         fold,
         settings.output_path,
         log,
-        save_checkpoint=False,
+        save_checkpoint=args.save_checkpoint,
     )
 
     del model, history, train_loader, valid_loader
@@ -269,7 +278,7 @@ Write_log(
 mean_valid_metric = np.mean(fold_f1)
 all_valid_metric = f1_score(train_df.label, train_df.model_pred)
 log_df = pd.DataFrame()
-log_df["Single_Public_LB"] = [None]  # VSCodeでLBみて手書きする想定 --
+log_df["Single_Public_LB"] = [None]  # VSCodeのCSVLintでLBみて手書きする想定 --
 log_df["all_valid_metric"] = [np.round(all_valid_metric, 6)]
 log_df["mean_valid_metric"] = [np.round(mean_valid_metric, 6)]
 log_df = pd.concat([log_df, pd.DataFrame(settings).T], axis=1)
