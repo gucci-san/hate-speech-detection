@@ -396,7 +396,10 @@ class BertClassificationConcatenateHeader(nn.Module):
 
     def forward(self, base_output):
         out = torch.cat(
-            [base_output["hidden_states"][-1 * i][:, 0, :] for i in range(1, 4 + 1)],
+            [
+                base_output["hidden_states"][-1 * i][:, 0, :]
+                for i in range(1, self.use_layer_num + 1)
+            ],
             dim=1,
         )
         outputs = self.fc(out)
@@ -413,11 +416,11 @@ class HateSpeechModel(nn.Module):
         n_msd=None,
     ):
         super(HateSpeechModel, self).__init__()
-        self.cfg = AutoConfig.from_pretrained(
+        self.cfg = AutoConfig.from_pretrained(model_name)
+        self.num_classes = num_classes
+        self.l1 = AutoModel.from_pretrained(
             model_name, output_attentions=True, output_hidden_states=True
         )
-        self.num_classes = num_classes
-        self.l1 = AutoModel.from_pretrained(model_name)
 
         if custom_header == "max_pooling":
             self.l2 = BertClassificationMaxPoolingHeader(
