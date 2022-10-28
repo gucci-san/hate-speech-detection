@@ -396,11 +396,38 @@ class BertClassificationConcatenateHeader(nn.Module):
 
     def forward(self, base_output):
         out = torch.cat(
-            [base_output["hidden_states"][-1 * i][:, 0, :] for i in range(1, 4 + 1)],
+            [
+                base_output["hidden_states"][-1 * i][:, 0, :]
+                for i in range(1, self.use_layer_num + 1)
+            ],
             dim=1,
         )
         outputs = self.fc(out)
         return outputs
+
+
+def torch_init_params_by_name(model, name):
+    """nameを含むnamed_parameterを初期化する関数"""
+    init_params = [
+        (param_name, params)
+        for (param_name, params) in model.named_parameters()
+        if name in param_name
+    ]
+    for param in init_params:
+        print(f"... {param[0]} initialized ... ")
+        nn.init.normal_(param[1], mean=0, std=0.02)
+
+
+def torch_freeze_params_by_name(model, name):
+    """nameを含むnamed_parameterをfreeze(required_grad=False)する関数"""
+    freeze_params = [
+        (param_name, params)
+        for (param_name, params) in model.named_parameters()
+        if name in param_name
+    ]
+    for param in freeze_params:
+        print(f"... {param[0]} freezed ... ")
+        param[1].requires_grad = False
 
 
 class HateSpeechModel(nn.Module):
@@ -413,11 +440,11 @@ class HateSpeechModel(nn.Module):
         n_msd=None,
     ):
         super(HateSpeechModel, self).__init__()
-        self.cfg = AutoConfig.from_pretrained(
+        self.cfg = AutoConfig.from_pretrained(model_name)
+        self.num_classes = num_classes
+        self.l1 = AutoModel.from_pretrained(
             model_name, output_attentions=True, output_hidden_states=True
         )
-        self.num_classes = num_classes
-        self.l1 = AutoModel.from_pretrained(model_name)
 
         if custom_header == "max_pooling":
             self.l2 = BertClassificationMaxPoolingHeader(
