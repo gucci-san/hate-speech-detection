@@ -448,7 +448,7 @@ class HateSpeechModel(nn.Module):
 
         if custom_header == "max_pooling":
             self.l2 = BertClassificationMaxPoolingHeader(
-                self.cfg.hidden_size,
+                self.cfg.hidden_size, self.num_classes
             )
         elif custom_header == "conv":
             self.l2 = BertClassificationConvolutionHeader(
