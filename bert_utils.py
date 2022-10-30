@@ -540,7 +540,6 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=T_max, eta_min=eta_min
         )
-
     else:
         print(f"*** *** NOT implemented *** *** ")
         print(f"        --> CosineAnnealingLR *** *** ")
@@ -597,6 +596,7 @@ def train_one_epoch(
                 Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
             )
 
+    # clean GPU memory --
     del input_ids, attention_mask, targets
     gc.collect()
     torch.cuda.empty_cache()
@@ -632,6 +632,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
             Epoch=epoch, Valid_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
         )
 
+    # clean GPU memory --
     del input_ids, attention_mask, targets
     gc.collect()
     torch.cuda.empty_cache()
@@ -718,7 +719,7 @@ def run_training(
         if valid_epoch_loss <= best_epoch_loss:
             Write_log(
                 log,
-                f"Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}",
+                f"epoch{epoch}: Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}",
             )
 
             best_epoch_loss = valid_epoch_loss
