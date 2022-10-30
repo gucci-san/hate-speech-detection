@@ -36,6 +36,7 @@ GPUtil = "^1.4.0"
 torchsummary = "^1.5.1"
 torch-summary = "^1.4.5"
 torchinfo = "^1.7.1"
+timm = "^0.6.11"
 
 [tool.poetry.dev-dependencies]
 
