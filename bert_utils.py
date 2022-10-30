@@ -25,6 +25,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
 from torch.cuda.amp import autocast
+from cosine_lr import CosineLRScheduler
 
 from transformers import (
     AutoConfig,
@@ -540,6 +541,16 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=T_max, eta_min=eta_min
         )
+    elif scheduler == "CosineAnnealingWithWarmUp":
+        scheduler = CosineLRScheduler(
+            optimizer,
+            t_initial=500,
+            lr_min=eta_min,
+            warmup_t=20,
+            warmup_lr_init=eta_min,
+            warmup_prefix=True,
+        )
+
     else:
         print(f"*** *** NOT implemented *** *** ")
         print(f"        --> CosineAnnealingLR *** *** ")
@@ -585,7 +596,10 @@ def train_one_epoch(
                 optimizer.zero_grad()
 
                 if scheduler is not None:
-                    scheduler.step()
+                    if "torch" in str(scheduler.__class__):
+                        scheduler.step()
+                    else:
+                        scheduler.step(step + 1)
 
             running_loss += loss.item() * batch_size
             dataset_size += batch_size
@@ -701,9 +715,6 @@ def run_training(
             epoch=epoch,
             n_accumulate=n_accumulate,
         )
-
-        Debug_print("train_done, ")
-        time.sleep(10)
 
         valid_epoch_loss = valid_one_epoch(
             model,

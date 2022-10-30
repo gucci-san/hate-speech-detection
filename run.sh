@@ -9,7 +9,7 @@
 # 再現性チェック
 #python bert_run_train.py --run_id "tmp_001" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5 --trial True --folds 5 --save_checkpoint True
 #python bert_run_train.py --run_id "tmp_002" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --trial True --folds 5 --save_checkpoint True
-python bert_run_train.py --run_id "tmp_003" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --trial True --folds 5 --save_checkpoint True
+python bert_run_train.py --run_id "tmp_003" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --trial True --folds 5 --save_checkpoint True --scheduler_name "CosineAnnealingWithWarmUp"
 
 
 # single run --

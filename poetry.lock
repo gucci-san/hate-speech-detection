@@ -1486,16 +1486,14 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "timm"
-version = "0.6.11"
+version = "0.5.4"
 description = "(Unofficial) PyTorch Image Models"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-huggingface-hub = "*"
-pyyaml = "*"
-torch = ">=1.7"
+torch = ">=1.4"
 torchvision = "*"
 
 [[package]]
@@ -1747,7 +1745,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "2798b89320c01a07b705a5dc93bc61dbc444319cb8bd9af21a01a3a445951334"
+content-hash = "464846849a7ffcb42ac73c313850ee6409377f7a6e366dfadb111a8968357186"
 
 [metadata.files]
 appnope = [
