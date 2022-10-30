@@ -1,7 +1,7 @@
 #!/bin/sh
 
-## test --
-#python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2
+# test --
+python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2 --save_checkpoint True
 
 ## serious test --
 #python bert_run_train.py --run_id "tmp_reproduct2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 6 --trial True --folds 5
@@ -100,10 +100,12 @@
 # 10/27時点で最強の組み合わせを試す --
 #python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_folds8" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 8 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 10
 #python bert_run_test.py --run_id "roberta_large_cat4_batch4_acc8_folds8"
+#python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_initlayer_demo3" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --model_custom_header "concatenate-4" --epochs 20 --init_layer 6 --learning_rate 2e-5 --save_checkpoint True
+#python bert_run_test.py --run_id "roberta_large_cat4_batch4_acc8_initlayer_demo3"
 
 # with cat-6 --
 #python bert_run_train.py --run_id "roberta_large_cat6_batch4_acc8" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate" --epochs 10
-python bert_run_train.py --run_id "roberta_large_cat6_batch4_acc8_reproduct2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate" --epochs 10
+#python bert_run_train.py --run_id "roberta_large_cat6_batch4_acc8_reproduct2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate" --epochs 10
 
 # ヘッダにtanhを足してみる --
 #python bert_run_train.py --run_id "roberta_large_cat4_batch4_acc8_tanh" --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 10
