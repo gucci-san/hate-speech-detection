@@ -718,7 +718,7 @@ def run_training(
         if valid_epoch_loss <= best_epoch_loss:
             Write_log(
                 log,
-                f"Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}",
+                f"epoch{epoch}: Valid Loss Improved : {best_epoch_loss:.6f} ---> {valid_epoch_loss:.6f}",
             )
 
             best_epoch_loss = valid_epoch_loss
