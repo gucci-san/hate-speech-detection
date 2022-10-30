@@ -24,7 +24,7 @@ import torch.nn as nn
 from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
-from torch.cuda.amp import GradScaler, autocast
+from torch.cuda.amp import autocast
 
 from transformers import (
     AutoConfig,
@@ -414,7 +414,7 @@ def torch_init_params_by_name(model, name):
         if name in param_name
     ]
     for param in init_params:
-        print(f"... {param[0]} initialized ... ")
+        print(f"{g_}... {param[0]} initialized ... {sr_}")
         nn.init.normal_(param[1], mean=0, std=0.02)
 
 
@@ -426,7 +426,7 @@ def torch_freeze_params_by_name(model, name):
         if name in param_name
     ]
     for param in freeze_params:
-        print(f"... {param[0]} freezed ... ")
+        print(f"{b_}... {param[0]} freezed ... {sr_}")
         param[1].requires_grad = False
 
 
@@ -448,7 +448,7 @@ class HateSpeechModel(nn.Module):
 
         if custom_header == "max_pooling":
             self.l2 = BertClassificationMaxPoolingHeader(
-                self.cfg.hidden_size,
+                self.cfg.hidden_size, self.num_classes
             )
         elif custom_header == "conv":
             self.l2 = BertClassificationConvolutionHeader(
@@ -551,11 +551,17 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
 
 
 def train_one_epoch(
-    model, optimizer, scheduler, dataloader, device, use_amp, epoch, n_accumulate
+    model,
+    optimizer,
+    scheduler,
+    dataloader,
+    device,
+    scaler,
+    use_amp,
+    epoch,
+    n_accumulate,
 ):
     model.train()
-
-    scaler = GradScaler(enabled=use_amp)
 
     dataset_size = 0
     running_loss = 0.0
@@ -641,6 +647,7 @@ def run_training(
     scheduler,
     n_accumulate,
     device,
+    scaler,
     use_amp,
     num_epochs,
     fold,
@@ -661,6 +668,13 @@ def run_training(
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+        scaler.load_state_dict(checkpoint["scaler_state_dict"])
+        random.setstate(checkpoint["random"])
+        np.random.set_state(checkpoint["np_random"])
+        torch.set_rng_state(checkpoint["torch"])
+        torch.random.set_rng_state(checkpoint["torch_random"])
+        torch.cuda.set_rng_state(checkpoint["cuda_random"])
+        torch.cuda.set_rng_state_all(checkpoint["cuda_random_all"])
         start_epoch, loss, best_epoch_loss = (
             checkpoint["epoch"],
             checkpoint["loss"],
@@ -681,6 +695,7 @@ def run_training(
             scheduler,
             dataloader=train_loader,
             device=device,
+            scaler=scaler,
             use_amp=use_amp,
             epoch=epoch,
             n_accumulate=n_accumulate,
@@ -719,6 +734,13 @@ def run_training(
                         "scheduler_state_dict": scheduler.state_dict(),
                         "loss": valid_epoch_loss,
                         "best_epoch_loss": best_epoch_loss,
+                        "scaler_state_dict": scaler.state_dict(),
+                        "random": random.getstate(),
+                        "np_random": np.random.get_state(),
+                        "torch": torch.get_rng_state(),
+                        "torch_random": torch.random.get_rng_state(),
+                        "cuda_random": torch.cuda.get_rng_state(),
+                        "cuda_random_all": torch.cuda.get_rng_state_all(),
                     },
                     f"{output_path}checkpoint-fold{fold}.pth",
                 )
