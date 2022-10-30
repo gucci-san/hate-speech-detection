@@ -752,6 +752,7 @@ def run_training(
                     },
                     f"{output_path}checkpoint-fold{fold}.pth",
                 )
+                Write_log(log, f"Checkpoint Saved")
             else:
                 torch.save(
                     {
@@ -759,8 +760,7 @@ def run_training(
                     },
                     f"{output_path}model-fold{fold}.pth",
                 )
-
-            Write_log(log, f"Model Saved")
+                Write_log(log, f"Model Saved")
             print()
 
     end_time = time.time()
