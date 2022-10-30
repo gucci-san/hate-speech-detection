@@ -550,13 +550,9 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
             warmup_lr_init=eta_min,
             warmup_prefix=True,
         )
-
     else:
-        print(f"*** *** NOT implemented *** *** ")
-        print(f"        --> CosineAnnealingLR *** *** ")
-        scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=T_max, eta_min=eta_min
-        )
+        print(f"{y_}*** Scheduler : None ***{sr_}")
+        scheduler = None
     return scheduler
 
 
