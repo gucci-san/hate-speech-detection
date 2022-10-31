@@ -12,7 +12,15 @@ import argparse
 # run_idだけ指定 --
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id", type=str, default="tmp")
+parser.add_argument(
+    "--single_pred",
+    type=str,
+    default=None,
+    help="if wants prediction with single-model, define the absolute path of model.",
+)
 args, unknown = parser.parse_known_args()
+
+save_hash = None
 
 # settings, モデル作成時に前処理したtest_dfを読み込み --
 output_path = f"{output_root}{args.run_id}/"
@@ -45,11 +53,18 @@ test_loader = DataLoader(
 #                                                      #
 # #################################################### #
 # run_idのディレクトリにあるpthを全て読み込んで、result-meanをするのが標準実装 --
-model_paths = glob(f"{settings.output_path}*.pth")
-model_paths.sort()
+# single_predが指定されればそれを使う --
+if args.single_pred is not None:
+    model_paths = [args.single_pred]
+    use_model_num = len(model_paths)
+    save_hash = "PRED_DEFINED_MODEL"
+else:
+    model_paths = glob(f"{settings.output_path}*.pth")
+    model_paths.sort()
+    use_model_num = settings.folds
 
 preds_list = []
-for fold in range(0, settings.folds):
+for fold in range(0, use_model_num):
     model_id = "model"
     preds = inference(
         settings.model_name,
@@ -78,4 +93,7 @@ submission = pd.merge(
 submission = submission.drop(["label"], axis=1).rename(
     columns={f"{model_id}_pred": "label"}
 )
-submission.to_csv(f"{settings.output_path}sub_{settings.run_id}.csv", index=False)
+
+submission.to_csv(
+    f"{settings.output_path}sub_{settings.run_id}_{save_hash}.csv", index=False
+)
