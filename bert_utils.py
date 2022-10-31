@@ -25,6 +25,7 @@ from torch.optim import lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torch.nn import functional as F
 from torch.cuda.amp import autocast
+from cosine_lr import CosineLRScheduler
 
 from transformers import (
     AutoConfig,
@@ -540,12 +541,18 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
         scheduler = lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=T_max, eta_min=eta_min
         )
-    else:
-        print(f"*** *** NOT implemented *** *** ")
-        print(f"        --> CosineAnnealingLR *** *** ")
-        scheduler = lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=T_max, eta_min=eta_min
+    elif scheduler == "CosineAnnealingWithWarmUp":
+        scheduler = CosineLRScheduler(
+            optimizer,
+            t_initial=T_max,
+            lr_min=eta_min,
+            warmup_t=(0.1 * T_max),
+            warmup_lr_init=eta_min,
+            warmup_prefix=True,
         )
+    else:
+        print(f"{y_}*** Scheduler : None ***{sr_}")
+        scheduler = None
     return scheduler
 
 
@@ -585,7 +592,10 @@ def train_one_epoch(
                 optimizer.zero_grad()
 
                 if scheduler is not None:
-                    scheduler.step()
+                    if "torch" in str(scheduler.__class__):
+                        scheduler.step()
+                    else:
+                        scheduler.step(step + 1)
 
             running_loss += loss.item() * batch_size
             dataset_size += batch_size
@@ -702,9 +712,6 @@ def run_training(
             n_accumulate=n_accumulate,
         )
 
-        Debug_print("train_done, ")
-        time.sleep(10)
-
         valid_epoch_loss = valid_one_epoch(
             model,
             optimizer,
@@ -745,6 +752,7 @@ def run_training(
                     },
                     f"{output_path}checkpoint-fold{fold}.pth",
                 )
+                Write_log(log, f"Checkpoint Saved")
             else:
                 torch.save(
                     {
@@ -752,8 +760,7 @@ def run_training(
                     },
                     f"{output_path}model-fold{fold}.pth",
                 )
-
-            Write_log(log, f"Model Saved")
+                Write_log(log, f"Model Saved")
             print()
 
     end_time = time.time()
@@ -780,6 +787,7 @@ def valid_fn(model, dataloader, device):
     model.eval()  # modelはtrainの時点でto(device)されている前提 --
 
     preds = []
+    softmax = nn.Softmax()  # metrics:BCEwithLogitsLossなので --
 
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:
@@ -787,8 +795,8 @@ def valid_fn(model, dataloader, device):
         attention_mask = data["attention_mask"].to(device, dtype=torch.long)
 
         outputs = model(input_ids, attention_mask)
-
-        preds.append(outputs.cpu().detach().numpy())
+        outputs = softmax(outputs.cpu().detach())
+        preds.append(outputs.numpy())
 
     preds = np.concatenate(preds)
     gc.collect()
@@ -812,10 +820,38 @@ def inference(
         checkpoint = torch.load(model_paths)
         model.load_state_dict(checkpoint["model_state_dict"])
 
-        print(f"Getting predictions for model : {path}")
+        print(f"{y_}Getting predictions for model : {path} {sr_}")
         preds = valid_fn(model, dataloader, device)
         final_preds.append(preds)
 
     final_preds = np.array(final_preds)
     final_preds = np.mean(final_preds, axis=0)
     return final_preds
+
+
+def state_dict_divider(state_dict, div=2, target=["weight", "bias"]):
+    """state_dictの値を割り算する関数"""
+    for key in state_dict.keys():
+        if key.split(".")[-1] in target:
+            state_dict[key] /= float(div)
+
+    return state_dict
+
+
+def model_parameter_ensembler(model_paths: list, target=["weight", "bias"]):
+    """.pthのリストを受け取り、その平均を返す"""
+
+    for i, path in enumerate(model_paths):
+        if i == 0:
+            avg_state_dict = torch.load(path)["model_state_dict"]
+            print(f"... load {path} to set average-root ... ... ")
+        else:
+            print(f"... ... key add : {path}")
+            for key in tqdm(avg_state_dict.keys(), total=len(avg_state_dict.keys())):
+                if key.split(".")[-1] in target:
+                    state_dict = torch.load(path)["model_state_dict"]
+                    avg_state_dict[key] += state_dict[key]
+    avg_state_dict = state_dict_divider(
+        avg_state_dict, div=len(model_paths), target=target
+    )
+    return avg_state_dict
