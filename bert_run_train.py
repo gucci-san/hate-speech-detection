@@ -46,8 +46,8 @@ parser.add_argument("--mixout", type=bool, default=False)
 parser.add_argument("--init_layer", type=int, default=None)
 parser.add_argument("--learning_rate", type=float, default=1e-5)
 parser.add_argument("--scheduler_name", type=str, default="CosineAnnealingLR")
-parser.add_argument("--min_lr", type=float, default=1e-6)
-parser.add_argument("--T_max", type=int, default=500)
+parser.add_argument("--min_lr", type=float, default=None)
+parser.add_argument("--T_max", type=int, default=None)
 parser.add_argument("--weight_decay", type=float, default=1e-5)
 parser.add_argument("--n_accumulate", type=int, default=1)
 parser.add_argument("--remark", type=str, default=None)
@@ -97,12 +97,11 @@ else:
         assert False, f"{r_}*** ... run_id {args.run_id} alreadly exists ... ***{sr_}"
 
 
-# 計算時点でのpyファイル, settingsを保存 --
+# 計算時点でのpyファイルを保存 --
 if not os.path.exists(f"{settings.output_path}src/"):
     os.mkdir(f"{settings.output_path}src/")
 os.system(f"cp ./*py {settings.output_path}src/")
 os.system(f"cp ./*sh {settings.output_path}src/")
-settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 
 # ====================================== #
@@ -131,6 +130,14 @@ log = open(settings.output_path + "/train.log", "w", buffering=1)
 Write_log(log, f"train:{train_df.shape}, test:{test_df.shape}\n")
 Write_log(log, "***************** TRAINING ********************")
 
+# T_max, min_lrが未指定の場合に合わせる --
+if settings.isna()["T_max"]:
+    settings["T_max"] = train_shape // settings.train_batch_size
+if settings.isna()["min_lr"]:
+    settings["min_lr"] = settings["learning_rate"] * 0.01
+
+# 使用するsettingsを保存 --
+settings.to_json(f"{settings.output_path}settings.json", indent=4)
 
 # ====================================== #
 #                                        #
@@ -181,7 +188,12 @@ for fold in range(0, settings.folds):
         lr=settings.learning_rate,
         weight_decay=settings.weight_decay,
     )
-    scheduler = fetch_scheduler(optimizer=optimizer, scheduler=settings.scheduler_name)
+    scheduler = fetch_scheduler(
+        optimizer=optimizer,
+        scheduler=settings.scheduler_name,
+        T_max=settings.T_max,
+        eta_min=settings.min_lr,
+    )
 
     # Define GradScaler --
     scaler = GradScaler(enabled=settings.use_amp)

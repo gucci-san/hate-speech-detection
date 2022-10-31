@@ -11,7 +11,8 @@
 #python bert_run_train.py --run_id "tmp_002" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --trial True --folds 5 --save_checkpoint True
 
 # シンプルなsingle run --
-python bert_run_train.py --run_id "roberta-large_scheduler-None" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name None
+#python bert_run_train.py --run_id "roberta-large_scheduler-None" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name None
+python bert_run_train.py --run_id "roberta-large_scheduler-warmup" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 3 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
 
 
 # single run --
