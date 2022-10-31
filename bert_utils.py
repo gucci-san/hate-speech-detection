@@ -787,6 +787,7 @@ def valid_fn(model, dataloader, device):
     model.eval()  # modelはtrainの時点でto(device)されている前提 --
 
     preds = []
+    softmax = nn.Softmax()  # metrics:BCEwithLogitsLossなので --
 
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:
@@ -794,8 +795,8 @@ def valid_fn(model, dataloader, device):
         attention_mask = data["attention_mask"].to(device, dtype=torch.long)
 
         outputs = model(input_ids, attention_mask)
-
-        preds.append(outputs.cpu().detach().numpy())
+        outputs = softmax(outputs.cpu().detach())
+        preds.append(outputs.numpy())
 
     preds = np.concatenate(preds)
     gc.collect()

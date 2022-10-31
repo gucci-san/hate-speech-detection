@@ -12,10 +12,9 @@
 
 # シンプルなsingle run --
 #python bert_run_train.py --run_id "roberta-large_scheduler-None" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name None
-#python bert_run_train.py --run_id "roberta-large_scheduler-warmup" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 3 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
-python bert_run_test.py --run_id "roberta-large_scheduler-warmup" --single_pred "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/output/roberta-large_scheduler-warmup/model-mean_of_folds.pth"
-python bert_run_test.py --run_id "roberta-large_scheduler-warmup"
-
+#python bert_run_train.py --run_id "roberta-large_scheduler-warmup2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 1 --folds 3 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_test.py --run_id "roberta-large_scheduler-warmup" --single_pred "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/output/roberta-large_scheduler-warmup/model-mean_of_folds.pth"
+python bert_run_test.py --run_id "roberta-large_scheduler-warmup2"
 
 #python bert_run_test.py --run_id "roberta-large_scheduler-warmup"
 
