@@ -819,10 +819,38 @@ def inference(
         checkpoint = torch.load(model_paths)
         model.load_state_dict(checkpoint["model_state_dict"])
 
-        print(f"Getting predictions for model : {path}")
+        print(f"{y_}Getting predictions for model : {path} {sr_}")
         preds = valid_fn(model, dataloader, device)
         final_preds.append(preds)
 
     final_preds = np.array(final_preds)
     final_preds = np.mean(final_preds, axis=0)
     return final_preds
+
+
+def state_dict_divider(state_dict, div=2, target=["weight", "bias"]):
+    """state_dictの値を割り算する関数"""
+    for key in state_dict.keys():
+        if key.split(".")[-1] in target:
+            state_dict[key] /= float(div)
+
+    return state_dict
+
+
+def model_parameter_ensembler(model_paths: list, target=["weight", "bias"]):
+    """.pthのリストを受け取り、その平均を返す"""
+
+    for i, path in enumerate(model_paths):
+        if i == 0:
+            avg_state_dict = torch.load(path)["model_state_dict"]
+            print(f"... load {path} to set average-root ... ... ")
+        else:
+            print(f"... ... key add : {path}")
+            for key in tqdm(avg_state_dict.keys(), total=len(avg_state_dict.keys())):
+                if key.split(".")[-1] in target:
+                    state_dict = torch.load(path)["model_state_dict"]
+                    avg_state_dict[key] += state_dict[key]
+    avg_state_dict = state_dict_divider(
+        avg_state_dict, div=len(model_paths), target=target
+    )
+    return avg_state_dict

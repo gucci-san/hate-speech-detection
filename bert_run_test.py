@@ -83,7 +83,7 @@ for _class in range(0, settings.num_classes):
     test_df.loc[:, f"{model_id}_oof_class_{_class}"] = final_preds[:, _class]
 
 # update test_df.feather
-test_df.to_feather(f"{settings.output_path}test_df.feather")
+test_df.to_feather(f"{settings.output_path}test_df_{save_hash}.feather")
 
 # make submission file --
 submission = pd.read_csv(f"{data_path}sample_submission.csv")
