@@ -1,5 +1,47 @@
 #!/bin/sh
 
+# そろそろ本番 --
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+
+# ## lr --
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr3e-5" --learning_rate 3e-5 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr5e-5" --learning_rate 5e-5 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr8e-6" --learning_rate 8e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6e-6" --learning_rate 6e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr4e-6" --learning_rate 4e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr2e-6" --learning_rate 2e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr1e-7" --learning_rate 1e-7 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+# python bert_run_test.py --run_id "roberta-large_logits-fix_base-lr8e-6"
+# python bert_run_test.py --run_id "roberta-large_logits-fix_base-lr6e-6"
+
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr7.5e-6" --learning_rate 7.5e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr7.0e-6" --learning_rate 7.0e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.5e-6" --learning_rate 6.5e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.4e-6" --learning_rate 6.4e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.3e-6" --learning_rate 6.3e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.2e-6" --learning_rate 6.2e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.1e-6" --learning_rate 6.1e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ==============================================================-
 # test --
 #python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2 --save_checkpoint True
 
@@ -14,7 +56,7 @@
 #python bert_run_train.py --run_id "roberta-large_scheduler-None" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name None
 #python bert_run_train.py --run_id "roberta-large_scheduler-warmup2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 1 --folds 3 --scheduler_name "CosineAnnealingWithWarmUp"
 #python bert_run_test.py --run_id "roberta-large_scheduler-warmup" --single_pred "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/output/roberta-large_scheduler-warmup/model-mean_of_folds.pth"
-python bert_run_test.py --run_id "roberta-large_scheduler-warmup2"
+#python bert_run_test.py --run_id "roberta-large_scheduler-warmup2"
 
 #python bert_run_test.py --run_id "roberta-large_scheduler-warmup"
 

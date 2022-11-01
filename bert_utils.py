@@ -546,7 +546,7 @@ def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
             optimizer,
             t_initial=T_max,
             lr_min=eta_min,
-            warmup_t=(0.1 * T_max),
+            warmup_t=int(0.1 * T_max),
             warmup_lr_init=eta_min,
             warmup_prefix=True,
         )
