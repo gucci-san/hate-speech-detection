@@ -22,16 +22,23 @@
 #python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.2e-6" --learning_rate 6.2e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
 #python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.1e-6" --learning_rate 6.1e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
 
-# How to dropout-seed inside BERT ?? --
-python bert_run_train.py --run_id "dropout-seed_001" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5 --trial True --folds 2 --save_checkpoint True --seed 688
-python bert_run_train.py --run_id "dropout-seed_002" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5 --trial True --folds 2 --save_checkpoint True --seed 688
-
-
-
-
-
-
-
+# 0.754を出した設定(folds==5, batch==4, acc==8)でseedを振ってみる --
+#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed0" --seed 0 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed1" --seed 1 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed2" --seed 2 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed3" --seed 3 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed4" --seed 4 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed5" --seed 5 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed0"
+#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed1"
+#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed2"
+#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed3"
+#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed4"
+#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed5"
+python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed6" --seed 6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed7" --seed 7 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed8" --seed 8 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed9" --seed 9 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
 
 
 

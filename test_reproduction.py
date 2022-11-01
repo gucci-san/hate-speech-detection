@@ -60,6 +60,9 @@ def main():
     model_paths1.sort()
     model_paths2.sort()
 
+    assert len(model_paths1) > 1, f"run_id1 contains 0 pth files or undefined."
+    assert len(model_paths2) > 1, f"run_id2 contains 0 pth files or undefined."
+
     assert len(model_paths1) == len(
         model_paths2
     ), f"Two run_id contains different models (pth files), {len(model_paths1)} and {len(model_paths2)}"

@@ -465,6 +465,8 @@ class HateSpeechModel(nn.Module):
                 False
             ), f"custom header == {custom_header} not defined (or implemented)"
 
+        self.l3 = nn.LogSoftmax(dim=1)
+
     def forward(self, input_ids, attention_mask):
         out = self.l1(
             input_ids=input_ids,
@@ -472,6 +474,7 @@ class HateSpeechModel(nn.Module):
             output_hidden_states=True,
         )
         out = self.l2(out)
+        out = self.l3(out)
         return out
 
 
@@ -530,8 +533,12 @@ def prepare_loaders(
 
 def criterion(outputs, targets):
     # loss_f = nn.BCELoss()
-    loss_f = nn.BCEWithLogitsLoss()
-    return loss_f(outputs, targets)
+    # loss_f = nn.BCEWithLogitsLoss()
+    # loss_f = nn.CrossEntropyLoss()
+    loss_f = nn.NLLLoss()
+
+    # return loss_f(outputs, targets)
+    return loss_f(outputs, torch.argmax(targets, axis=1))
 
 
 def fetch_scheduler(scheduler, optimizer, T_max=500, eta_min=1e-7):
