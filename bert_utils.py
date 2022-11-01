@@ -73,7 +73,7 @@ def Write_log(logFile, text, isPrint=True):
 
 
 def seed_everything(seed=42):
-    print(f"\n****** SEED fixed : {seed} ******\n\n")
+    print(f"\n****** random-seed fixed : {seed} ******\n\n")
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
@@ -88,9 +88,6 @@ def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
-
-
-seed_everything(SEED)
 
 
 def nchars(s, n):
@@ -486,6 +483,7 @@ def prepare_loaders(
     val_batch_size,
     max_length,
     num_classes,
+    seed,
     text_col="text",
     label_name=label_name,
 ):
@@ -509,7 +507,7 @@ def prepare_loaders(
     )
 
     g = torch.Generator()
-    g.manual_seed(SEED)
+    g.manual_seed(seed)
     train_loader = DataLoader(
         train_dataset,
         batch_size=trn_batch_size,
