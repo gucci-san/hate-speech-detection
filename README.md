@@ -47,3 +47,13 @@
 ### 確認したい事項
 * 結局BERTの中身わかってないからなあ......
 * AutoModelとAutoModelForMaskedLMの違い
+
+### Papers --
+* https://arxiv.org/pdf/1910.12574.pdf
+    * Mozafari et al.,(2019)
+    * 英語の3クラス分類、ヘイトスピーチ系
+    * BERT+4つのFine-Tuning構造
+        * 1, last_hidden_stateの[CLS]直下だけを直接Softmax
+        * 2, last_hidden_stateの[CLS]直下 -> nn.Linear(768, 768)-LeakyReLU(negative_slope=0.01) を2回 -> Softmax
+        * 3, RNN -> Softmax
+        * 4, 
