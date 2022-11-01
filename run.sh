@@ -22,6 +22,9 @@
 #python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.2e-6" --learning_rate 6.2e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
 #python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr6.1e-6" --learning_rate 6.1e-6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
 
+# How to dropout-seed inside BERT ?? --
+python bert_run_train.py --run_id "dropout-seed_001" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5 --trial True --folds 2 --save_checkpoint True --seed 688
+python bert_run_train.py --run_id "dropout-seed_002" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 5 --trial True --folds 2 --save_checkpoint True --seed 688
 
 
 
@@ -43,7 +46,7 @@
 
 # ==============================================================-
 # test --
-python bert_run_train.py --run_id "tmp2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2 --save_checkpoint True --seed 688
+#python bert_run_train.py --run_id "tmp2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2 --save_checkpoint True --seed 688
 
 ## serious test --
 #python bert_run_train.py --run_id "tmp_reproduct2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 6 --trial True --folds 5
