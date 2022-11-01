@@ -43,7 +43,7 @@
 
 # ==============================================================-
 # test --
-#python bert_run_train.py --run_id "tmp" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2 --save_checkpoint True
+python bert_run_train.py --run_id "tmp2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 1 --trial True --folds 2 --save_checkpoint True --seed 688
 
 ## serious test --
 #python bert_run_train.py --run_id "tmp_reproduct2" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate-4" --epochs 6 --trial True --folds 5

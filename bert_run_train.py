@@ -53,6 +53,7 @@ parser.add_argument("--n_accumulate", type=int, default=1)
 parser.add_argument("--remark", type=str, default=None)
 parser.add_argument("--trial", type=bool, default=False)
 parser.add_argument("--save_checkpoint", type=bool, default=False)
+parser.add_argument("--seed", type=int, default=42)
 args, unknown = parser.parse_known_args()
 
 settings = pd.Series(dtype=object)
@@ -85,7 +86,9 @@ settings["n_accumulate"] = args.n_accumulate
 # experiment remarks --
 settings["remark"] = args.remark
 settings["save_checkpoint"] = args.save_checkpoint
-settings["seed"] = SEED
+settings["seed"] = args.seed
+
+seed_everything(settings.seed)
 
 # run_idが重複したらlogが消えてしまうので、プログラムごと止めるようにする --
 if not os.path.exists(settings.output_path):
@@ -118,7 +121,7 @@ train_df, test_df = preprocess_text(
 )
 
 # make folds --
-skf = StratifiedKFold(n_splits=settings.folds, shuffle=True, random_state=SEED)
+skf = StratifiedKFold(n_splits=settings.folds, shuffle=True, random_state=settings.seed)
 split = skf.split(train_df, train_df[label_name])
 train_df = make_folds(split, train_df, label_name=label_name)
 
@@ -158,6 +161,7 @@ for fold in range(0, settings.folds):
         val_batch_size=settings.valid_batch_size,
         max_length=settings.max_length,
         num_classes=settings.num_classes,
+        seed=settings.seed,
         text_col="clean_text",
     )
 
@@ -244,6 +248,7 @@ for fold in range(0, settings.folds):
         val_batch_size=settings.valid_batch_size,
         max_length=settings.max_length,
         num_classes=settings.num_classes,
+        seed=settings.seed,
         text_col="clean_text",
     )
 
