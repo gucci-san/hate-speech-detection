@@ -79,7 +79,6 @@ def seed_everything(seed=42):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    # この２つ結局どっちなんだ？ --
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -404,6 +403,53 @@ class BertClassificationConcatenateHeader(nn.Module):
         return outputs
 
 
+class BertClassificationMozafariHeader(nn.Module):
+    """
+    Mozafari et al., 2019の(d)を実装したModule
+    AutoModelのoutput["hidden_states"]を受け取る想定
+    実装はここを参考(https://github.com/ZeroxTM/BERT-CNN-Fine-Tuning-For-Hate-Speech-Detection-in-Online-Social-Media/blob/main/Model.py)
+
+    BatchNorm2dの場所は下記を参考
+    https://qiita.com/cfiken/items/b477c7878828ebdb0387
+
+    """
+
+    def __init__(self, hidden_size, hidden_layer_num, max_length, num_classes):
+        super(BertClassificationMozafariHeader, self).__init__()
+        self.hidden_size = hidden_size
+        self.hidden_layer_num = hidden_layer_num
+        self.max_length = max_length
+        self.num_classes = num_classes
+
+        self.conv = nn.Conv2d(
+            in_channels=self.hidden_layer_num,
+            out_channels=self.hidden_layer_num,
+            kernel_size=(3, self.hidden_size),
+            padding=1,
+        )  # [batch, hidden_layer, max_length, hidden_size] -> [batch, hidden_layer, max_length, 1]
+        self.batchnorm = nn.BatchNorm2d(num_features=self.hidden_layer_num)
+        self.pool = nn.MaxPool2d(kernel_size=3, stride=1)
+        self.relu = nn.ReLU()
+        self.flatten = nn.Flatten()  # [batch, a, b, c...] -> [batch, a*b*c...]
+        self.fc = nn.Linear(
+            self.hidden_layer_num * (self.max_length - 2), self.num_classes
+        )
+
+    def forward(self, base_output):
+        out = torch.transpose(
+            torch.cat(
+                tuple([t.unsqueeze(0) for t in base_output["hidden_states"]][1:]), 0
+            ),
+            0,
+            1,
+        )  # -> [batch, hidden_layer_num, max_length, hidden_size] --
+        out = self.relu(self.batchnorm(self.conv(out)))
+        out = self.pool(out)  # "...the maximum value for each transformer encoder..."
+        outputs = self.fc(self.flatten(out))
+
+        return outputs
+
+
 def torch_init_params_by_name(model, name):
     """nameを含むnamed_parameterを初期化する関数"""
     init_params = [
@@ -432,6 +478,7 @@ class HateSpeechModel(nn.Module):
     def __init__(
         self,
         model_name,
+        max_length,
         num_classes,
         custom_header="max_pooling",
         dropout=0.2,
@@ -439,6 +486,7 @@ class HateSpeechModel(nn.Module):
     ):
         super(HateSpeechModel, self).__init__()
         self.cfg = AutoConfig.from_pretrained(model_name)
+        self.max_length = max_length
         self.num_classes = num_classes
         self.l1 = AutoModel.from_pretrained(
             model_name, output_attentions=True, output_hidden_states=True
@@ -459,6 +507,13 @@ class HateSpeechModel(nn.Module):
         elif custom_header in ["concatenate", "concatenate-4"]:
             self.l2 = BertClassificationConcatenateHeader(
                 self.cfg.hidden_size, self.num_classes, use_layer_num=4
+            )
+        elif custom_header == "mozafari":
+            self.l2 = BertClassificationMozafariHeader(
+                self.cfg.hidden_size,
+                self.cfg.num_hidden_layers,
+                self.max_length,
+                self.num_classes,
             )
         else:
             assert (
@@ -810,13 +865,21 @@ def valid_fn(model, dataloader, device):
 
 
 def inference(
-    model_name, num_classes, custom_header, dropout, model_paths, dataloader, device
+    model_name,
+    max_length,
+    num_classes,
+    custom_header,
+    dropout,
+    model_paths,
+    dataloader,
+    device,
 ):
     final_preds = []
 
     for i, path in enumerate([model_paths]):
         model = HateSpeechModel(
             model_name=model_name,
+            max_length=max_length,
             num_classes=num_classes,
             custom_header=custom_header,
             dropout=dropout,

@@ -168,6 +168,7 @@ for fold in range(0, settings.folds):
     # Model construct --
     model = HateSpeechModel(
         model_name=settings.model_name,
+        max_length=settings.max_length,
         num_classes=settings.num_classes,
         custom_header=settings.model_custom_header,
         dropout=settings.dropout,
@@ -255,6 +256,7 @@ for fold in range(0, settings.folds):
     valid = train_df[train_df.kfold == fold]
     out = inference(
         settings.model_name,
+        settings.max_length,
         settings.num_classes,
         settings.model_custom_header,
         settings.dropout,

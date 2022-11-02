@@ -34,7 +34,7 @@ def torch_parameter_compare(m1_path: str, m2_path: str) -> list:
     # そもそもkeyが完全一致しなければ計算しない, modelのstructureを確認してほしい --
     assert (
         len(set(m1.keys()) - set(m2.keys())) == 0
-    ), "... m1.keys() vs m2.keys() dosen't match ..."
+    ), f"{r_}[FAILED] ... m1.keys() vs m2.keys() dosen't match ...{sr_}"
 
     # 各キーごとにtensorを比較する --
     unmatched_keys = []
@@ -47,7 +47,7 @@ def torch_parameter_compare(m1_path: str, m2_path: str) -> list:
     if len(unmatched_keys) == 0:
         print(f"{g_}        --> All keys matched ... {sr_}")
     else:
-        print(f"{y_}        --> Some keys unmatched : {unmatched_keys} {sr_}")
+        print(f"{r_}[FAILED]--> Some keys unmatched : {unmatched_keys} {sr_}")
 
     return unmatched_keys
 
@@ -60,12 +60,16 @@ def main():
     model_paths1.sort()
     model_paths2.sort()
 
-    assert len(model_paths1) > 1, f"run_id1 contains 0 pth files or undefined."
-    assert len(model_paths2) > 1, f"run_id2 contains 0 pth files or undefined."
+    assert (
+        len(model_paths1) > 1
+    ), f"{r_}[FAILED] run_id1 contains 0 pth files or undefined.{sr_}"
+    assert (
+        len(model_paths2) > 1
+    ), f"{r_}[FAILED] run_id2 contains 0 pth files or undefined.{sr_}"
 
     assert len(model_paths1) == len(
         model_paths2
-    ), f"Two run_id contains different models (pth files), {len(model_paths1)} and {len(model_paths2)}"
+    ), f"{r_}[FAILED] Two run_id contains different models (pth files), {len(model_paths1)} and {len(model_paths2)}{sr_}"
 
     for fold in range(0, len(model_paths1)):
         _ = torch_parameter_compare(model_paths1[fold], model_paths2[fold])

@@ -68,6 +68,7 @@ for fold in range(0, use_model_num):
     model_id = "model"
     preds = inference(
         settings.model_name,
+        settings.max_length,
         settings.num_classes,
         settings.model_custom_header,
         settings.dropout,
