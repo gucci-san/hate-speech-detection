@@ -408,6 +408,7 @@ class BertClassificationMozafariHeader(nn.Module):
     Mozafari et al., 2019の(d)を実装したModule
     AutoModelのoutput["hidden_states"]を受け取る想定
     実装はここを参考(https://github.com/ZeroxTM/BERT-CNN-Fine-Tuning-For-Hate-Speech-Detection-in-Online-Social-Media/blob/main/Model.py)
+    ↑のリンクではEmbedding layerのアウトプットも入れてたけど、論文的にはどうなん？って感じがしたので抜いてる --
 
     BatchNorm2dの場所は下記を参考
     https://qiita.com/cfiken/items/b477c7878828ebdb0387
