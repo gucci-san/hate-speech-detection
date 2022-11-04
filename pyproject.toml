@@ -37,6 +37,7 @@ torchsummary = "^1.5.1"
 torch-summary = "^1.4.5"
 torchinfo = "^1.7.1"
 timm = "0.5.4"
+kaleido = "0.2.1"
 
 [tool.poetry.dev-dependencies]
 
