@@ -1,4 +1,7 @@
 ## NISHIKA, hate-speech-detection
+### 参考notebook
+* https://www.kaggle.com/code/debarshichanda/pytorch-w-b-jigsaw-starter
+* Nishika「Fake News Detection」のTutorial
 
 ### To Do
 <スクリプト化>
