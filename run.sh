@@ -35,7 +35,7 @@
 #python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed4" --seed 4 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
 #python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed5" --seed 5 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
 #python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed6" --seed 6 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
-#python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed7" --seed 7 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
+python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed7" --seed 7 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
 #python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed8" --seed 8 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
 #python bert_run_train.py --run_id "roberta-large_cat4_batch4_acc8_seed9" --seed 9 --model_name "nlp-waseda/roberta-large-japanese-seq512" --folds 5 --train_batch_size 4 --n_accumulate 8 --model_custom_header "concatenate-4" --epochs 6
 #python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed0"
@@ -45,7 +45,7 @@
 #python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed4"
 #python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed5"
 #python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed6"
-#python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed7"
+python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed7"
 #python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed8"
 #python bert_run_test.py --run_id "roberta-large_cat4_batch4_acc8_seed9"
 
