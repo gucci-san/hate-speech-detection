@@ -793,7 +793,6 @@ def run_training(
             best_epoch_loss = valid_epoch_loss
             best_model_wts = copy.deepcopy(model.state_dict())
 
-            # 提出ファイルを圧縮前合計25GBにしないといけないので、いらないもの保存できない --
             if save_checkpoint:
                 torch.save(
                     {
