@@ -1,7 +1,7 @@
 #!/bin/sh
 
-python bert_run_train.py --run_id "pseudo-label-implement-out" --train_data "raw+test_pseudo" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 10 --folds 5 --seed 0
-
+#python bert_run_train.py --trial True --run_id "pseudo-label-implement-out" --train_data "raw+test_pseudo" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 8 --folds 5 --seed 0
+python bert_run_test.py --run_id "pseudo-label-implement-out"
 
 #python bert_run_train.py --run_id "pseudo-label-implement-base" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 10 --folds 5
 #python bert_run_test.py --run_id "pseudo-label-implement-base"
