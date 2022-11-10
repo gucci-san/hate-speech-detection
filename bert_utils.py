@@ -522,6 +522,7 @@ class HateSpeechModel(nn.Module):
             ), f"custom header == {custom_header} not defined (or implemented)"
 
         self.l3 = nn.LogSoftmax(dim=1)
+        self.l4 = nn.Softmax(dim=1)
 
     def forward(self, input_ids, attention_mask):
         out = self.l1(
@@ -530,8 +531,17 @@ class HateSpeechModel(nn.Module):
             output_hidden_states=True,
         )
         out = self.l2(out)
-        out = self.l3(out)
-        return out
+
+        # split-output --
+        log_softmax_out = self.l3(out)
+        proba = self.l4(out)
+        
+        #return log_softmax_out, proba
+        outputs = {
+            "log_softmax_out": log_softmax_out,
+            "proba": proba
+        }
+        return outputs
 
 
 def prepare_loaders(
@@ -644,7 +654,7 @@ def train_one_epoch(
 
         with autocast(enabled=use_amp):
             outputs = model(input_ids, attention_mask)
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs["log_softmax_out"], targets)
             loss = loss / np.float(n_accumulate)
             scaler.scale(loss).backward()
 
@@ -695,7 +705,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
 
         outputs = model(input_ids, attention_mask)
 
-        loss = criterion(outputs, targets)
+        loss = criterion(outputs["log_softmax_out"], targets)
 
         running_loss += loss.item() * batch_size
         dataset_size += batch_size
@@ -860,7 +870,7 @@ def valid_fn(model, dataloader, device):
         input_ids = data["input_ids"].to(device, dtype=torch.long)
         attention_mask = data["attention_mask"].to(device, dtype=torch.long)
 
-        outputs = model(input_ids, attention_mask).cpu().detach()
+        outputs = model(input_ids, attention_mask)["proba"].cpu().detach()
         preds.append(outputs.numpy())
 
     preds = np.concatenate(preds)
