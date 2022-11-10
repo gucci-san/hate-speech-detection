@@ -163,9 +163,8 @@ def prepare_dataframe(train_data):
     elif train_data == "raw+test_pseudo":
         train = pd.read_csv(data_path + "train.csv")
         test_pseudo = pd.read_feather(
-            f"{input_root}pseudo_label_base/test_pseudo_labeled.feather"
-        )
-        test_pseudo[label_name] = 1  # hard label --
+            f"{output_root}pseudo-label-implement-base/test_df.feather"
+        ).loc[:, ["id", "source", "text", "model_pred"]].rename(columns={"model_pred": label_name})
         train = pd.concat([train, test_pseudo]).reset_index(drop=True)
         test = pd.read_csv(data_path + "test.csv")
 
@@ -857,6 +856,27 @@ def run_training(
     history["Valid Loss"] = sum(history["Valid Loss"], [])
 
     return model, history
+
+
+#def run_training_step_eval(
+#    model,
+#    train_loader,
+#    valid_loader,
+#    optimizer,
+#    scheduler,
+#    n_accumulate,
+#    device,
+#    scaler,
+#    use_amp,
+#    num_epochs,
+#    fold,
+#    output_path,
+#    log=None,
+#    save_checkpoint=False,
+#    load_checkpoint=None,
+#):
+#
+#
 
 
 @torch.no_grad()

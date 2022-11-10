@@ -1,7 +1,19 @@
 #!/bin/sh
 
-# そろそろ本番 --
-#python bert_run_train.py --run_id "roberta-large_logits-fix_base" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
+python bert_run_train.py --run_id "pseudo-label-implement-out" --train_data "raw+test_pseudo" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 10 --folds 5 --seed 0
+
+
+#python bert_run_train.py --run_id "pseudo-label-implement-base" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 10 --folds 5
+#python bert_run_test.py --run_id "pseudo-label-implement-base"
+
+# pseudo-labelをやってみる。seedはno leakyで設定は全部一緒とする --
+#python bert_run_train.py --trial True --run_id "pseudo-label-implement-base" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 10 --folds 5
+#python bert_run_test.py --run_id "pseudo-label-implement-base"
+
+
+
+## そろそろ本番 --
+#python bert_run_train.py --run_id "roberta-large_logits-fix_base" --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 3 --folds 2 --trial True
 
 # ## lr --
 #python bert_run_train.py --run_id "roberta-large_logits-fix_base-lr3e-5" --learning_rate 3e-5 --model_name "nlp-waseda/roberta-large-japanese-seq512" --model_custom_header "concatenate" --epochs 5 --folds 5 --scheduler_name "CosineAnnealingWithWarmUp"
