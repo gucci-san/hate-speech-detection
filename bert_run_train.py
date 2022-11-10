@@ -147,6 +147,9 @@ settings.to_json(f"{settings.output_path}settings.json", indent=4)
 #    --          Training          --    #
 #                                        #
 # ====================================== #
+
+train_step_loss = pd.DataFrame(columns=list(range(0, settings.folds)))
+valid_step_loss = pd.DataFrame(columns=list(range(0, settings.folds)))
 for fold in range(0, settings.folds):
 
     # print(f"{y_} ====== Fold: {fold} ======{sr_}")
@@ -221,8 +224,14 @@ for fold in range(0, settings.folds):
         save_checkpoint=args.save_checkpoint,
     )
 
+    train_step_loss[fold] = history["Train Loss"]
+    valid_step_loss[fold] = history["Valid Loss"]
+
     del model, history, train_loader, valid_loader
     _ = gc.collect()
+
+train_step_loss.to_csv(f"{settings.output_path}train_step_loss.csv", index=False)
+valid_step_loss.to_csv(f"{settings.output_path}valid_step_loss.csv", index=False)
 
 
 # ====================================== #

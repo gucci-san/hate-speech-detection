@@ -2,7 +2,7 @@ import os
 import torch
 
 # original competition data path --
-data_path = "/mnt/sda/NISHIKA_DATA/hate-speech-detection/"
+data_path = "/mnt/sda1/NISHIKA_DATA/hate-speech-detection/"
 
 # processed input data path --
 input_root = "./input/"
