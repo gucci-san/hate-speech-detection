@@ -10,9 +10,9 @@ if not os.path.exists(input_root):
     os.mkdir(input_root)
 
 # computational result path --
-output_root = "./output/"
+#output_root = "./output/"
 #output_root = "/mnt/sdb/NISHIKA_DATA/hate-speech-detection/output/"
-#output_root = "/mnt/sdc/NISHIKA_DATA/hate-speech-detection/output/"
+output_root = "/mnt/sdc1/NISHIKA_DATA/hate-speech-detection/output/"
 if not os.path.exists(output_root):
     os.mkdir(output_root)
 
