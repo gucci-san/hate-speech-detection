@@ -224,8 +224,10 @@ for fold in range(0, settings.folds):
         save_checkpoint=args.save_checkpoint,
     )
 
-    train_step_loss[fold] = history["Train Loss"]
-    valid_step_loss[fold] = history["Valid Loss"]
+    # ここ、バッチサイズがfoldで共通じゃなかった場合に短い方に強制的に合わせてます
+    # 長いバッチのケツはカットされてるので要注意 --
+    train_step_loss[fold] = pd.Series(history["Train Loss"])
+    valid_step_loss[fold] = pd.Series(history["Valid Loss"])
 
     del model, history, train_loader, valid_loader
     _ = gc.collect()
