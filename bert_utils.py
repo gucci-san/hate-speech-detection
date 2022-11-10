@@ -632,6 +632,7 @@ def train_one_epoch(
 
     dataset_size = 0
     running_loss = 0.0
+    train_loss_list = []
 
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:
@@ -662,6 +663,7 @@ def train_one_epoch(
             dataset_size += batch_size
 
             epoch_loss = running_loss / dataset_size
+            train_loss_list.append(epoch_loss)
 
             bar.set_postfix(
                 Epoch=epoch, Train_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
@@ -672,7 +674,7 @@ def train_one_epoch(
     gc.collect()
     torch.cuda.empty_cache()
 
-    return epoch_loss
+    return train_loss_list
 
 
 @torch.no_grad()
@@ -681,6 +683,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
 
     dataset_size = 0
     running_loss = 0.0
+    valid_loss_list = []
 
     bar = tqdm(enumerate(dataloader), total=len(dataloader))
     for step, data in bar:
@@ -698,6 +701,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
         dataset_size += batch_size
 
         epoch_loss = running_loss / dataset_size
+        valid_loss_list.append(epoch_loss)
 
         bar.set_postfix(
             Epoch=epoch, Valid_Loss=epoch_loss, LR=optimizer.param_groups[0]["lr"]
@@ -708,7 +712,7 @@ def valid_one_epoch(model, optimizer, dataloader, device, epoch):
     gc.collect()
     torch.cuda.empty_cache()
 
-    return epoch_loss
+    return valid_loss_list
 
 
 def run_training(
@@ -761,7 +765,7 @@ def run_training(
     for epoch in range(start_epoch, num_epochs + start_epoch):
         gc.collect()
 
-        train_epoch_loss = train_one_epoch(
+        train_epoch_loss_list = train_one_epoch(
             model,
             optimizer,
             scheduler,
@@ -773,16 +777,17 @@ def run_training(
             n_accumulate=n_accumulate,
         )
 
-        valid_epoch_loss = valid_one_epoch(
+        valid_epoch_loss_list = valid_one_epoch(
             model,
             optimizer,
             dataloader=valid_loader,
             device=device,
             epoch=epoch,
         )
+        valid_epoch_loss = valid_epoch_loss_list[-1]
 
-        history["Train Loss"].append(train_epoch_loss)
-        history["Valid Loss"].append(valid_epoch_loss)
+        history["Train Loss"].append(train_epoch_loss_list)
+        history["Valid Loss"].append(valid_epoch_loss_list)
 
         if valid_epoch_loss <= best_epoch_loss:
             Write_log(
@@ -838,6 +843,8 @@ def run_training(
     Write_log(log, "Best Loss: {:.4f}".format(best_epoch_loss))
 
     model.load_state_dict(best_model_wts)
+    history["Train Loss"] = sum(history["Train Loss"], [])
+    history["Valid Loss"] = sum(history["Valid Loss"], [])
 
     return model, history
 
