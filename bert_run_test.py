@@ -57,11 +57,12 @@ test_loader = DataLoader(
 if args.single_pred is not None:
     model_paths = [args.single_pred]
     use_model_num = len(model_paths)
-    save_hash = "PRED_DEFINED_MODEL"
+    save_hash = "_PRED_DEFINED_MODEL"
 else:
     model_paths = glob(f"{settings.output_path}*.pth")
     model_paths.sort()
     use_model_num = settings.folds
+    save_hash = ""
 
 preds_list = []
 for fold in range(0, use_model_num):
@@ -84,7 +85,7 @@ for _class in range(0, settings.num_classes):
     test_df.loc[:, f"{model_id}_oof_class_{_class}"] = final_preds[:, _class]
 
 # update test_df.feather
-test_df.to_feather(f"{settings.output_path}test_df_{save_hash}.feather")
+test_df.to_feather(f"{settings.output_path}test_df{save_hash}.feather")
 
 # make submission file --
 submission = pd.read_csv(f"{data_path}sample_submission.csv")
