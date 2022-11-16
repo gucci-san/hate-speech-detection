@@ -66,7 +66,7 @@ print(dict(optimization_result))
 # ###########################################
 test_df = pd.DataFrame(columns=(["id"] + run_id_list))
 for i, run_id in enumerate(run_id_list):
-    t = pd.read_feather(f"{output_root}{run_id}/test_df_None.feather")
+    t = pd.read_feather(f"{output_root}{run_id}/test_df.feather")
     if i == 0:
         test_df["id"] = t["id"]
     test_df[f"{run_id}"] = t.loc[:, "model_oof_class_1"]
