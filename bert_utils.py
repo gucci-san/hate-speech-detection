@@ -858,25 +858,71 @@ def run_training(
     return model, history
 
 
-#def run_training_step_eval(
-#    model,
-#    train_loader,
-#    valid_loader,
-#    optimizer,
-#    scheduler,
-#    n_accumulate,
-#    device,
-#    scaler,
-#    use_amp,
-#    num_epochs,
-#    fold,
-#    output_path,
-#    log=None,
-#    save_checkpoint=False,
-#    load_checkpoint=None,
-#):
-#
-#
+# epoch内でevalしたい場合 --
+# !! not-implemented --
+def run_training_step_eval(
+    model,
+    train_loader,
+    valid_loader,
+    optimizer,
+    scheduler,
+    n_accumulate,
+    device,
+    scaler,
+    use_amp,
+    num_epochs,
+    fold,
+    output_path,
+    log=None,
+    save_checkpoint=False,
+    load_checkpoint=None,
+):
+
+    if torch.cuda.is_available():
+        Write_log(log, f"[INFO] Using GPU : {torch.cuda.get_device_name()}\n")
+
+    # ------------------------------------------------------------
+    start_time = time.time()
+
+    if load_checkpoint is not None:
+        checkpoint = torch.load(load_checkpoint)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+        scaler.load_state_dict(checkpoint["scaler_state_dict"])
+        random.setstate(checkpoint["random"])
+        np.random.set_state(checkpoint["np_random"])
+        torch.set_rng_state(checkpoint["torch"])
+        torch.random.set_rng_state(checkpoint["torch_random"])
+        torch.cuda.set_rng_state(checkpoint["cuda_random"])
+        torch.cuda.set_rng_state_all(checkpoint["cuda_random_all"])
+        start_epoch, loss, best_epoch_loss = (
+            checkpoint["epoch"],
+            checkpoint["loss"],
+            checkpoint["best_epoch_loss"],
+        )
+        start_epoch += 1  # 保存されてたepoch==1なら、次は2から始まるはずなので --
+    else:
+        start_epoch, loss, best_epoch_loss = 1, None, np.inf
+
+    best_model_wts = copy.deepcopy(model.state_dict())
+    history = defaultdict(list)
+    for epoch in range(start_epoch, num_epochs + start_epoch):
+        gc.collect()
+
+        model.train()
+        
+        dataset_size = 0
+        running_loss = 0.0
+        train_loss_list = []
+
+        bar = tqdm(enumerate(train_loader), total=len(train_loader))
+        for step, data in bar:
+            pass
+
+    return None
+
+
 
 
 @torch.no_grad()
