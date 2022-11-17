@@ -15,6 +15,7 @@ seed_everything(seed=42)
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--run_id_list", type=str, nargs="*", required=True)
+parser.add_argument("--how", type=str, default="nelder-mead")
 args, unknown = parser.parse_known_args()
 
 # define run hash --
@@ -25,6 +26,11 @@ if not os.path.exists(f"./output/ensemble_{run_hash}"):
 run_id_list = args.run_id_list
 assert len(run_id_list) > 0, f" ... run_id_list must be len() > 1 ..."
 
+# ###########################################
+#
+#   -- weights & threshold optimization --
+#
+# ###########################################
 result_df = pd.DataFrame(columns=([label_name] + run_id_list))
 for i, run_id in enumerate(run_id_list):
     t = pd.read_feather(f"{output_root}{run_id}/train_df.feather")
@@ -32,12 +38,6 @@ for i, run_id in enumerate(run_id_list):
         result_df[label_name] = t[label_name]
     result_df[f"{run_id}"] = t.loc[:, "model_oof_class_1"].rename(f"{run_id}")
 
-
-# ###########################################
-#
-#   -- weights & threshold optimization --
-#
-# ###########################################
 def objective(x, result_df, run_id_list):
     ensemble_pred = np.zeros(result_df.shape[0])
 
@@ -47,12 +47,16 @@ def objective(x, result_df, run_id_list):
 
     return -f1_score(ensemble_pred, result_df[label_name])
 
+def constraints(x):
+    return (np.sum(x[:-1]) - 1)
+
 optimization_result = minimize(
     objective,
     x0 = [1.0/len(run_id_list)]*len(run_id_list) + [0.5],
     args = (result_df, run_id_list),
     method="Nelder-Mead",
     #bounds=[[-np.inf, np.inf]]*len(run_id_list) + [0, 1],
+    constraints={"type": "eq", "fun": constraints},
 )
 
 print("\n\n {} \n\n".format(optimization_result["message"]))
