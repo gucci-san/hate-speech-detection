@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "hate_speech_detection"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9, <3.10"
 pandas = "1.5.0"
 lightgbm = "3.3.2"
 jupyter = "1.0.0"
@@ -38,6 +38,7 @@ torchinfo = "1.7.1"
 timm = "0.5.4"
 kaleido = "0.2.1"
 black = "22.10.0"
+optuna = "^3.0.3"
 
 
 [build-system]
