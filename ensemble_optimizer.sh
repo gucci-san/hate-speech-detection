@@ -18,6 +18,7 @@
 #     "roberta-large_cat4_batch4_acc8_seed7" \
 #     "roberta-large_cat4_batch4_acc8_seed8"
 
-python ensemble_optimizer.py --run_id_list \
+#python ensemble_optimizer.py --how "nelder-mead" --run_id_list \
+python ensemble_optimizer.py --how "optuna" --run_id_list \
     "roberta-large_cat4_batch4_acc8_seed7" \
     "pseudo-label-implement-out"
